@@ -3,8 +3,6 @@ src/
 .vscode
 _archived
 
-data/config.php
-
 uploads/big/*
 uploads/import/*
 uploads/medium/*
