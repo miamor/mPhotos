@@ -99,7 +99,7 @@ final class Import {
 	public function server($path, $albumID = 0) {
 
 		// Parse path
-		if (!isset($path))           $path = PHOTOS_MANAGER_UPLOADS_IMPORT;
+		if (!isset($path))           $path = $PHOTOS_MANAGER_UPLOADS_IMPORT;
 		if (substr($path, -1)==='/') $path = substr($path, 0, -1);
 
 		if (is_dir($path)===false) {
@@ -108,9 +108,9 @@ final class Import {
 		}
 
 		// Skip folders of PhotosManager
-		if ($path===PHOTOS_MANAGER_UPLOADS_BIG||($path . '/')===PHOTOS_MANAGER_UPLOADS_BIG||
-			$path===PHOTOS_MANAGER_UPLOADS_MEDIUM||($path . '/')===PHOTOS_MANAGER_UPLOADS_MEDIUM||
-			$path===PHOTOS_MANAGER_UPLOADS_THUMB||($path . '/')===PHOTOS_MANAGER_UPLOADS_THUMB) {
+		if ($path===$PHOTOS_MANAGER_UPLOADS_BIG||($path . '/')===$PHOTOS_MANAGER_UPLOADS_BIG||
+			$path===$PHOTOS_MANAGER_UPLOADS_MEDIUM||($path . '/')===$PHOTOS_MANAGER_UPLOADS_MEDIUM||
+			$path===$PHOTOS_MANAGER_UPLOADS_THUMB||($path . '/')===$PHOTOS_MANAGER_UPLOADS_THUMB) {
 				Log::error(Database::get(), __METHOD__, __LINE__, 'The given path is a reserved path of PhotosManager (' . $path . ')');
 				return false;
 		}

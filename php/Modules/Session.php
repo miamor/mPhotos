@@ -2,136 +2,154 @@
 
 namespace PhotosManager\Modules;
 
-final class Session {
+final class Session
+{
 
-	/**
-	 * Reads and returns information about the PhotosManager installation.
-	 * @return array Returns an array with the login status and configuration.
-	 */
-	public function init($public = true) {
+    /**
+     * Reads and returns information about the PhotosManager installation.
+     * @return array Returns an array with the login status and configuration.
+     */
+    public function init($public = true)
+    {
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-		// Return settings
-		$return['config'] = Settings::get();
+        // Return settings
+        $return['config'] = Settings::get();
 
-		// Path to PhotosManager for the server-import dialog
-		$return['config']['location'] = PHOTOS_MANAGER;
+        // Path to PhotosManager for the server-import dialog
+        $return['config']['location'] = PHOTOS_MANAGER;
 
-		// Remove sensitive from response
-		unset($return['config']['username']);
-		unset($return['config']['password']);
-		unset($return['config']['identifier']);
+        // Remove sensitive from response
+        unset($return['config']['username']);
+        unset($return['config']['password']);
+        unset($return['config']['identifier']);
 
-		// Check if login credentials exist and login if they don't
-		if ($this->noLogin()===true) {
-			$public = false;
-			$return['config']['login'] = false;
-		} else {
-			$return['config']['login'] = true;
-		}
+        // Check if login credentials exist and login if they don't
+        if ($this->noLogin() === true) {
+            $public = false;
+            $return['config']['login'] = false;
+        } else {
+            $return['config']['login'] = true;
+        }
 
-		if ($public===false) {
+        if ($public === false) {
 
-			// Logged in
-			$return['status'] = PHOTOS_MANAGER_STATUS_LOGGEDIN;
+            // Logged in
+            $return['status'] = PHOTOS_MANAGER_STATUS_LOGGEDIN;
 
-		} else {
+        } else {
 
-			// Logged out
-			$return['status'] = PHOTOS_MANAGER_STATUS_LOGGEDOUT;
+            // Logged out
+            $return['status'] = PHOTOS_MANAGER_STATUS_LOGGEDOUT;
 
-			// Unset unused vars
-			unset($return['config']['skipDuplicates']);
-			unset($return['config']['sortingAlbums']);
-			unset($return['config']['sortingPhotos']);
-			unset($return['config']['dropboxKey']);
-			unset($return['config']['login']);
-			unset($return['config']['location']);
-			unset($return['config']['imagick']);
-			unset($return['config']['plugins']);
+            // Unset unused vars
+            unset($return['config']['skipDuplicates']);
+            unset($return['config']['sortingAlbums']);
+            unset($return['config']['sortingPhotos']);
+            unset($return['config']['dropboxKey']);
+            unset($return['config']['login']);
+            unset($return['config']['location']);
+            unset($return['config']['imagick']);
+            unset($return['config']['plugins']);
 
-		}
+        }
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-		return $return;
+        return $return;
 
-	}
+    }
 
-	/**
-	 * Sets the session values when username and password correct.
-	 * @return boolean Returns true when login was successful.
-	 */
-	public function login($username, $password) {
+    /**
+     * Sets the session values when username and password correct.
+     * @return boolean Returns true when login was successful.
+     */
+    public function login($username, $password)
+    {
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-		$username_crypt = crypt($username, Settings::get()['username']);
-		$password_crypt = crypt($password, Settings::get()['password']);
+        $username_crypt = crypt($username, Settings::get()['username']);
+        $password_crypt = crypt($password, Settings::get()['password']);
+        
+        // echo $username_crypt.'~~'.$password_crypt.'--';
 
-		// Check login with crypted hash
-		if (Settings::get()['username']===$username_crypt&&
-			Settings::get()['password']===$password_crypt) {
-				$_SESSION['login']      = true;
-				$_SESSION['identifier'] = Settings::get()['identifier'];
-				Log::notice(Database::get(), __METHOD__, __LINE__, 'User (' . $username . ') has logged in from ' . $_SERVER['REMOTE_ADDR']);
-				return true;
-		}
+        // Check login with crypted hash
+        // if (Settings::get()['username'] === $username_crypt &&
+        //     Settings::get()['password'] === $password_crypt) {
+        //     $_SESSION['login'] = true;
+        //     $_SESSION['identifier'] = Settings::get()['identifier'];
+        //     Log::notice(Database::get(), __METHOD__, __LINE__, 'User (' . $username . ') has logged in from ' . $_SERVER['REMOTE_ADDR']);
+        //     return true;
+        // }
 
-		// No login
-		if ($this->noLogin()===true) return true;
+        $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE username = '?' AND password = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_USERS, $username_crypt, $password_crypt));
+        $users = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        $user = $users->fetch_object();
+        // if ($user['password'] == $password_crypt) {
+            $_SESSION['login'] = true;
+            $_SESSION['identifier'] = $username_crypt;
+            Log::notice(Database::get(), __METHOD__, __LINE__, 'User (' . $username . ') has logged in from ' . $_SERVER['REMOTE_ADDR']);
+            return true;
+        // }
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+        // No login
+        if ($this->noLogin() === true) {
+            // return true;
+            return $username_crypt;
+        }
 
-		// Log failed log in
-		Log::error(Database::get(), __METHOD__, __LINE__, 'User (' . $username . ') has tried to log in from ' . $_SERVER['REMOTE_ADDR']);
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-		return false;
+        // Log failed log in
+        Log::error(Database::get(), __METHOD__, __LINE__, 'User (' . $username . ') has tried to log in from ' . $_SERVER['REMOTE_ADDR']);
 
-	}
+        return false;
 
-	/**
-	 * Sets the session values when no there is no username and password in the database.
-	 * @return boolean Returns true when no login was found.
-	 */
-	private function noLogin() {
+    }
 
-		// Check if login credentials exist and login if they don't
-		if (Settings::get()['username']===''&&
-			Settings::get()['password']==='') {
-				$_SESSION['login']      = true;
-				$_SESSION['identifier'] = Settings::get()['identifier'];
-				return true;
-		}
+    /**
+     * Sets the session values when no there is no username and password in the database.
+     * @return boolean Returns true when no login was found.
+     */
+    private function noLogin()
+    {
 
-		return false;
+        // Check if login credentials exist and login if they don't
+        if (Settings::get()['username'] === '' &&
+            Settings::get()['password'] === '') {
+            $_SESSION['login'] = true;
+            $_SESSION['identifier'] = Settings::get()['identifier'];
+            return true;
+        }
 
-	}
+        return false;
 
-	/**
-	 * Unsets the session values.
-	 * @return boolean Returns true when logout was successful.
-	 */
-	public function logout() {
+    }
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+    /**
+     * Unsets the session values.
+     * @return boolean Returns true when logout was successful.
+     */
+    public function logout()
+    {
 
-		session_unset();
-		session_destroy();
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+        session_unset();
+        session_destroy();
 
-		return true;
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-	}
+        return true;
+
+    }
 
 }
-
-?>

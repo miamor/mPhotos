@@ -3,15 +3,16 @@ src/
 .vscode
 _archived
 
-uploads/big/*
-uploads/import/*
-uploads/medium/*
-uploads/thumb/*
+uploads/*
+uploads/*/big/*
+uploads/*/import/*
+uploads/*/medium/*
+uploads/*/thumb/*
 
-!uploads/big/index.html
-!uploads/import/index.html
-!uploads/medium/index.html
-!uploads/thumb/index.html
+!uploads/*/big/index.html
+!uploads/*/import/index.html
+!uploads/*/medium/index.html
+!uploads/*/thumb/index.html
 
 plugins/*
 

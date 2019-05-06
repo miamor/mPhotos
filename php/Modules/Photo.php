@@ -28,7 +28,18 @@ final class Photo {
 	 */
 	public function __construct($photoIDs) {
 
-		// Init vars
+        $this->PHOTOS_MANAGER_URL_UPLOADS = PHOTOS_MANAGER_URL_UPLOADS;
+        $this->PHOTOS_MANAGER_URL_UPLOADS_BIG = PHOTOS_MANAGER_URL_UPLOADS_BIG;
+        $this->PHOTOS_MANAGER_URL_UPLOADS_MEDIUM = PHOTOS_MANAGER_URL_UPLOADS_MEDIUM;
+        $this->PHOTOS_MANAGER_URL_UPLOADS_THUMB = PHOTOS_MANAGER_URL_UPLOADS_THUMB;
+
+        $this->PHOTOS_MANAGER_UPLOADS = PHOTOS_MANAGER_UPLOADS;
+        $this->PHOTOS_MANAGER_UPLOADS_BIG = PHOTOS_MANAGER_UPLOADS_BIG;
+        $this->PHOTOS_MANAGER_UPLOADS_MEDIUM = PHOTOS_MANAGER_UPLOADS_MEDIUM;
+        $this->PHOTOS_MANAGER_UPLOADS_THUMB = PHOTOS_MANAGER_UPLOADS_THUMB;
+
+
+        // Init vars
 		$this->photoIDs = $photoIDs;
 
 		return true;
@@ -43,18 +54,6 @@ final class Photo {
 	 * @return string|false ID of the added photo.
 	 */
 	public function add(array $files, $albumID = 0, $returnOnError = false) {
-
-		// Check permissions
-		if (hasPermissions(PHOTOS_MANAGER_UPLOADS)===false||
-			hasPermissions(PHOTOS_MANAGER_UPLOADS_BIG)===false||
-			hasPermissions(PHOTOS_MANAGER_UPLOADS_THUMB)===false) {
-				Log::error(Database::get(), __METHOD__, __LINE__, 'An upload-folder is missing or not readable and writable');
-				if ($returnOnError===true) return false;
-				Response::error('An upload-folder is missing or not readable and writable!');
-		}
-
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
 		switch($albumID) {
 
@@ -84,7 +83,27 @@ final class Photo {
 				$public = 0;
 				break;
 
-		}
+        }
+        
+        if ($albumID != 0) {
+            $this->PHOTOS_MANAGER_UPLOADS = PHOTOS_MANAGER_UPLOADS.'/'.$albumID;
+            $this->PHOTOS_MANAGER_UPLOADS_BIG = $this->PHOTOS_MANAGER_UPLOADS.'/big/';
+            $this->PHOTOS_MANAGER_UPLOADS_MEDIUM = $this->PHOTOS_MANAGER_UPLOADS.'/medium/';
+            $this->PHOTOS_MANAGER_UPLOADS_THUMB = $this->PHOTOS_MANAGER_UPLOADS.'/thumb/';
+        }
+
+        // Check permissions
+		if (hasPermissions($this->PHOTOS_MANAGER_UPLOADS)===false||
+            hasPermissions($this->PHOTOS_MANAGER_UPLOADS_BIG)===false||
+            hasPermissions($this->PHOTOS_MANAGER_UPLOADS_THUMB)===false) {
+                Log::error(Database::get(), __METHOD__, __LINE__, 'An upload-folder is missing or not readable and writable');
+                if ($returnOnError===true) return false;
+                Response::error('An upload-folder is missing or not readable and writable!');
+        }
+
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
+
 
 		// Only process the first photo in the array
 		$file = $files[0];
@@ -146,7 +165,7 @@ final class Photo {
 		// Set paths
 		$tmp_name   = $file['tmp_name'];
 		$photo_name = md5($id) . $extension;
-		$path       = PHOTOS_MANAGER_UPLOADS_BIG . $photo_name;
+		$path       = $this->PHOTOS_MANAGER_UPLOADS_BIG . $photo_name;
 
 		// Calculate checksum
 		$checksum = sha1_file($tmp_name);
@@ -239,8 +258,8 @@ final class Photo {
 
 		}
 
-		$values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $id, $info['title'], $photo_name, $info['description'], $info['tags'], $info['type'], $info['width'], $info['height'], $info['size'], $info['iso'], $info['aperture'], $info['make'], $info['model'], $info['shutter'], $info['focal'], $info['takestamp'], $path_thumb, $albumID, $public, $star, $checksum, $medium);
-		$query  = Database::prepare(Database::get(), "INSERT INTO ? (id, title, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum, medium) VALUES ('?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?')", $values);
+		$values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $id, $info['title'], $_SESSION['identifier'], $photo_name, $info['description'], $info['tags'], $info['type'], $info['width'], $info['height'], $info['size'], $info['iso'], $info['aperture'], $info['make'], $info['model'], $info['shutter'], $info['focal'], $info['takestamp'], $path_thumb, $albumID, $public, $star, $checksum, $medium);
+		$query  = Database::prepare(Database::get(), "INSERT INTO ? (id, title, user_identifier, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum, medium) VALUES ('?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?')", $values);
 		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
 		if ($result===false) {
@@ -261,8 +280,8 @@ final class Photo {
 	private function exists($checksum, $photoID = null) {
 
 		// Exclude $photoID from select when $photoID is set
-		if (isset($photoID)) $query = Database::prepare(Database::get(), "SELECT id, url, thumbUrl, medium FROM ? WHERE checksum = '?' AND id <> '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $checksum, $photoID));
-		else                 $query = Database::prepare(Database::get(), "SELECT id, url, thumbUrl, medium FROM ? WHERE checksum = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $checksum));
+		if (isset($photoID)) $query = Database::prepare(Database::get(), "SELECT id, url, thumbUrl, medium, album FROM ? WHERE checksum = '?' AND id <> '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $checksum, $photoID));
+		else                 $query = Database::prepare(Database::get(), "SELECT id, url, thumbUrl, medium, album FROM ? WHERE checksum = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $checksum));
 
 		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
@@ -272,9 +291,14 @@ final class Photo {
 
 			$result = $result->fetch_object();
 
+            if ($result->album != 0) {
+                $this->PHOTOS_MANAGER_UPLOADS = PHOTOS_MANAGER_UPLOADS.'/'.$albumID;
+                $this->PHOTOS_MANAGER_UPLOADS_BIG = $this->PHOTOS_MANAGER_UPLOADS.'/big/';
+            }
+    
 			$return = array(
 				'photo_name' => $result->url,
-				'path'       => PHOTOS_MANAGER_UPLOADS_BIG . $result->url,
+				'path'       => $this->PHOTOS_MANAGER_UPLOADS_BIG . $result->url,
 				'path_thumb' => $result->thumbUrl,
 				'medium'     => $result->medium
 			);
@@ -303,8 +327,8 @@ final class Photo {
 		$newHeight = 200;
 
 		$photoName = explode('.', $filename);
-		$newUrl    = PHOTOS_MANAGER_UPLOADS_THUMB . $photoName[0] . '.jpeg';
-		$newUrl2x  = PHOTOS_MANAGER_UPLOADS_THUMB . $photoName[0] . '@2x.jpeg';
+		$newUrl    = $this->PHOTOS_MANAGER_UPLOADS_THUMB . $photoName[0] . '.jpeg';
+		$newUrl2x  = $this->PHOTOS_MANAGER_UPLOADS_THUMB . $photoName[0] . '@2x.jpeg';
 
 		// Create thumbnails with Imagick
 		if(Settings::hasImagick()) {
@@ -411,7 +435,7 @@ final class Photo {
 		$newHeight = 1080;
 
 		// Check permissions
-		if (hasPermissions(PHOTOS_MANAGER_UPLOADS_MEDIUM)===false) {
+		if (hasPermissions($this->PHOTOS_MANAGER_UPLOADS_MEDIUM)===false) {
 
 			// Permissions are missing
 			Log::notice(Database::get(), __METHOD__, __LINE__, 'Skipped creation of medium-photo, because uploads/medium/ is missing or not readable and writable.');
@@ -425,7 +449,7 @@ final class Photo {
 			($width>$newWidth||$height>$newHeight)&&
 			(extension_loaded('imagick')&&Settings::get()['imagick']==='1')) {
 
-			$newUrl = PHOTOS_MANAGER_UPLOADS_MEDIUM . $filename;
+			$newUrl = $this->PHOTOS_MANAGER_UPLOADS_MEDIUM . $filename;
 
 			// Read image
 			$medium = new Imagick();
@@ -637,7 +661,7 @@ final class Photo {
 	 * @return array Returns photo-attributes in a normalized structure.
 	 */
 	public static function prepareData(array $data) {
-
+        
 		// Excepts the following:
 		// (array) $data = ['id', 'title', 'tags', 'public', 'star', 'album', 'thumbUrl', 'takestamp', 'url', 'medium']
 
@@ -652,13 +676,22 @@ final class Photo {
 		$photo['star']   = $data['star'];
 		$photo['album']  = $data['album'];
 
+        if ($photo['album'] != 0) {
+            $PHOTOS_MANAGER_URL_UPLOADS__ = PHOTOS_MANAGER_URL_UPLOADS.'/'.$photo['album'];
+        } else {
+            $PHOTOS_MANAGER_URL_UPLOADS__ = PHOTOS_MANAGER_URL_UPLOADS;
+        }
+        $PHOTOS_MANAGER_URL_UPLOADS_THUMB__ = $PHOTOS_MANAGER_URL_UPLOADS__.'/thumb/';
+        $PHOTOS_MANAGER_URL_UPLOADS_MEDIUM__ = $PHOTOS_MANAGER_URL_UPLOADS__.'/medium/';
+        $PHOTOS_MANAGER_URL_UPLOADS_BIG__ = $PHOTOS_MANAGER_URL_UPLOADS__.'/big/';
+
 		// Parse medium
-		if ($data['medium']==='1') $photo['medium'] = PHOTOS_MANAGER_URL_UPLOADS_MEDIUM . $data['url'];
+		if ($data['medium']==='1') $photo['medium'] = $PHOTOS_MANAGER_URL_UPLOADS_MEDIUM__ . $data['url'];
 		else                       $photo['medium'] = '';
 
 		// Parse paths
-		$photo['thumbUrl'] = PHOTOS_MANAGER_URL_UPLOADS_THUMB . $data['thumbUrl'];
-		$photo['url']      = PHOTOS_MANAGER_URL_UPLOADS_BIG . $data['url'];
+		$photo['thumbUrl'] = $PHOTOS_MANAGER_URL_UPLOADS_THUMB__ . $data['thumbUrl'];
+		$photo['url']      = $PHOTOS_MANAGER_URL_UPLOADS_BIG__ . $data['url'];
 
 		// Use takestamp as sysdate when possible
 		if (isset($data['takestamp'])&&$data['takestamp']!=='0') {
@@ -712,13 +745,21 @@ final class Photo {
 		$photo['sysdate'] = strftime('%d %b. %Y', substr($photo['id'], 0, -4));
 		if (strlen($photo['takestamp'])>1) $photo['takedate'] = strftime('%d %b. %Y %T', $photo['takestamp']);
 
+        
+        if ($photo['album'] != 0) {
+            $this->PHOTOS_MANAGER_URL_UPLOADS = PHOTOS_MANAGER_URL_UPLOADS.'/'.$photo['album'];
+            $this->PHOTOS_MANAGER_URL_UPLOADS_THUMB = $this->PHOTOS_MANAGER_URL_UPLOADS.'/thumb/';
+            $this->PHOTOS_MANAGER_URL_UPLOADS_MEDIUM = $this->PHOTOS_MANAGER_URL_UPLOADS.'/medium/';
+            $this->PHOTOS_MANAGER_URL_UPLOADS_BIG = $this->PHOTOS_MANAGER_URL_UPLOADS.'/big/';
+        }
+
 		// Parse medium
-		if ($photo['medium']==='1') $photo['medium'] = PHOTOS_MANAGER_URL_UPLOADS_MEDIUM . $photo['url'];
+		if ($photo['medium']==='1') $photo['medium'] = $this->PHOTOS_MANAGER_URL_UPLOADS_MEDIUM . $photo['url'];
 		else                        $photo['medium'] = '';
 
 		// Parse paths
-		$photo['url']      = PHOTOS_MANAGER_URL_UPLOADS_BIG . $photo['url'];
-		$photo['thumbUrl'] = PHOTOS_MANAGER_URL_UPLOADS_THUMB . $photo['thumbUrl'];
+		$photo['url']      = $this->PHOTOS_MANAGER_URL_UPLOADS_BIG . $photo['url'];
+		$photo['thumbUrl'] = $this->PHOTOS_MANAGER_URL_UPLOADS_THUMB . $photo['thumbUrl'];
 
 		if ($albumID!='false') {
 
@@ -902,7 +943,7 @@ final class Photo {
 		Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
 		// Get photo
-		$query  = Database::prepare(Database::get(), "SELECT title, url FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->photoIDs));
+		$query  = Database::prepare(Database::get(), "SELECT title, url, album FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->photoIDs));
 		$photos = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
 		if ($photos===false) return false;
@@ -935,13 +976,17 @@ final class Photo {
 		// Escape title
 		$photo->title = str_replace($badChars, '', $photo->title);
 
+        if ($photo->album != 0) {
+            $this->PHOTOS_MANAGER_URL_UPLOADS_BIG = PHOTOS_MANAGER_URL_UPLOADS.'/'.$photo->album.'/big/';
+        }
+
 		// Set headers
 		header("Content-Type: application/octet-stream");
 		header("Content-Disposition: attachment; filename=\"" . $photo->title . $extension . "\"");
-		header("Content-Length: " . filesize(PHOTOS_MANAGER_UPLOADS_BIG . $photo->url));
+		header("Content-Length: " . filesize($this->PHOTOS_MANAGER_UPLOADS_BIG . $photo->url));
 
 		// Send file
-		readfile(PHOTOS_MANAGER_UPLOADS_BIG . $photo->url);
+		readfile($this->PHOTOS_MANAGER_UPLOADS_BIG . $photo->url);
 
 		// Call plugins
 		Plugins::get()->activate(__METHOD__, 1, func_get_args());
@@ -1253,7 +1298,7 @@ final class Photo {
 		$error = false;
 
 		// Get photos
-		$query  = Database::prepare(Database::get(), "SELECT id, url, thumbUrl, checksum FROM ? WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->photoIDs));
+		$query  = Database::prepare(Database::get(), "SELECT id, url, thumbUrl, checksum, album FROM ? WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->photoIDs));
 		$photos = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
 		if ($photos===false) return false;
@@ -1269,26 +1314,33 @@ final class Photo {
 				$thumbUrl2x = explode(".", $photo->thumbUrl);
 				$thumbUrl2x = $thumbUrl2x[0] . '@2x.' . $thumbUrl2x[1];
 
+                if ($photo->album != 0) {
+                    $this->PHOTOS_MANAGER_UPLOADS = PHOTOS_MANAGER_UPLOADS.'/'.$photo->album;
+                    $this->PHOTOS_MANAGER_UPLOADS_THUMB = $this->PHOTOS_MANAGER_UPLOADS.'/thumb/';
+                    $this->PHOTOS_MANAGER_UPLOADS_MEDIUM = $this->PHOTOS_MANAGER_UPLOADS.'/medium/';
+                    $this->PHOTOS_MANAGER_UPLOADS_BIG = $this->PHOTOS_MANAGER_UPLOADS.'/big/';
+                }
+        
 				// Delete big
-				if (file_exists(PHOTOS_MANAGER_UPLOADS_BIG . $photo->url)&&!unlink(PHOTOS_MANAGER_UPLOADS_BIG . $photo->url)) {
+				if (file_exists($this->PHOTOS_MANAGER_UPLOADS_BIG . $photo->url)&&!unlink($this->PHOTOS_MANAGER_UPLOADS_BIG . $photo->url)) {
 					Log::error(Database::get(), __METHOD__, __LINE__, 'Could not delete photo in uploads/big/');
 					$error = true;
 				}
 
 				// Delete medium
-				if (file_exists(PHOTOS_MANAGER_UPLOADS_MEDIUM . $photo->url)&&!unlink(PHOTOS_MANAGER_UPLOADS_MEDIUM . $photo->url)) {
+				if (file_exists($this->PHOTOS_MANAGER_UPLOADS_MEDIUM . $photo->url)&&!unlink($this->PHOTOS_MANAGER_UPLOADS_MEDIUM . $photo->url)) {
 					Log::error(Database::get(), __METHOD__, __LINE__, 'Could not delete photo in uploads/medium/');
 					$error = true;
 				}
 
 				// Delete thumb
-				if (file_exists(PHOTOS_MANAGER_UPLOADS_THUMB . $photo->thumbUrl)&&!unlink(PHOTOS_MANAGER_UPLOADS_THUMB . $photo->thumbUrl)) {
+				if (file_exists($this->PHOTOS_MANAGER_UPLOADS_THUMB . $photo->thumbUrl)&&!unlink($this->PHOTOS_MANAGER_UPLOADS_THUMB . $photo->thumbUrl)) {
 					Log::error(Database::get(), __METHOD__, __LINE__, 'Could not delete photo in uploads/thumb/');
 					$error = true;
 				}
 
 				// Delete thumb@2x
-				if (file_exists(PHOTOS_MANAGER_UPLOADS_THUMB . $thumbUrl2x)&&!unlink(PHOTOS_MANAGER_UPLOADS_THUMB . $thumbUrl2x)) {
+				if (file_exists($this->PHOTOS_MANAGER_UPLOADS_THUMB . $thumbUrl2x)&&!unlink($this->PHOTOS_MANAGER_UPLOADS_THUMB . $thumbUrl2x)) {
 					Log::error(Database::get(), __METHOD__, __LINE__, 'Could not delete high-res photo in uploads/thumb/');
 					$error = true;
 				}

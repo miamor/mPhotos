@@ -2,7 +2,6 @@
 
 namespace PhotosManager\Access;
 
-use PhotosManager\Modules\Slide;
 use PhotosManager\Modules\Album;
 use PhotosManager\Modules\Albums;
 use PhotosManager\Modules\Import;
@@ -10,411 +9,563 @@ use PhotosManager\Modules\Photo;
 use PhotosManager\Modules\Response;
 use PhotosManager\Modules\Session;
 use PhotosManager\Modules\Settings;
+use PhotosManager\Modules\Slide;
 use PhotosManager\Modules\Validator;
 
-final class Admin extends Access {
+final class Admin extends Access
+{
 
-	public static function init($fn) {
+    public static function init($fn)
+    {
 
-		switch ($fn) {
+        switch ($fn) {
 
             // Slide functions
-            case 'Slide::getSlides':                self::getSlidesAction(); break;
-            case 'Slide::setPosition':              self::setPositionSlideshowAction(); break;
-            case 'Slide::getSlide':                 self::getSlideAction(); break;
-            case 'Slide::add':                      self::addToSlideshowAction(); break;
-            case 'Slide::delete':                   self::deleteSlideAction(); break;
-            case 'Slide::setNote':                  self::setSlideNoteAction(); break;
+            case 'Slide::getSlides':self::getSlidesAction();
+                break;
+            case 'Slide::setPosition':self::setPositionSlideshowAction();
+                break;
+            case 'Slide::getSlide':self::getSlideAction();
+                break;
+            case 'Slide::add':self::addToSlideshowAction();
+                break;
+            case 'Slide::delete':self::deleteSlideAction();
+                break;
+            case 'Slide::setNote':self::setSlideNoteAction();
+                break;
 
+            // Albums functions
+            case 'Albums::get':self::getAlbumsAction();
+                break;
 
-			// Albums functions
-			case 'Albums::get':                     self::getAlbumsAction(); break;
+            // Album functions
+            case 'Album::get':self::getAlbumAction();
+                break;
+            case 'Album::getPublic':self::checkAlbumAccessAction();
+                break;
+            case 'Album::add':self::addAlbumAction();
+                break;
+            case 'Album::setTitle':self::setAlbumTitleAction();
+                break;
+            case 'Album::setDescription':self::setAlbumDescriptionAction();
+                break;
+            case 'Album::setPublic':self::setAlbumPublicAction();
+                break;
+            case 'Album::setPosition':self::setPositionAction();
+                break;
+            case 'Album::delete':self::deleteAlbumAction();
+                break;
+            case 'Album::merge':self::mergeAlbumsAction();
+                break;
+            case 'Album::addFolder':self::addFolderAction();
+                break;
+            case 'Album::getFolders':self::getFoldersAction();
+                break;
 
-			// Album functions
-            case 'Album::get':                      self::getAlbumAction(); break;
-			case 'Album::add':                      self::addAlbumAction(); break;
-			case 'Album::setTitle':                 self::setAlbumTitleAction(); break;
-			case 'Album::setDescription':           self::setAlbumDescriptionAction(); break;
-			case 'Album::setPublic':                self::setAlbumPublicAction(); break;
-			case 'Album::setPosition':              self::setPositionAction(); break;
-			case 'Album::delete':                   self::deleteAlbumAction(); break;
-			case 'Album::merge':                    self::mergeAlbumsAction(); break;
+            // Photo functions
+            case 'Photo::get':self::getPhotoAction();
+                break;
+            case 'Photo::setTitle':self::setPhotoTitleAction();
+                break;
+            case 'Photo::setDescription':self::setPhotoDescriptionAction();
+                break;
+            case 'Photo::setStar':self::setPhotoStarAction();
+                break;
+            case 'Photo::setPublic':self::setPhotoPublicAction();
+                break;
+            case 'Photo::setAlbum':self::setPhotoAlbumAction();
+                break;
+            case 'Photo::setTags':self::setPhotoTagsAction();
+                break;
+            case 'Photo::duplicate':self::duplicatePhotoAction();
+                break;
+            case 'Photo::delete':self::deletePhotoAction();
+                break;
 
-			// Photo functions
-            case 'Photo::get':                      self::getPhotoAction(); break;
-			case 'Photo::setTitle':                 self::setPhotoTitleAction(); break;
-			case 'Photo::setDescription':           self::setPhotoDescriptionAction(); break;
-			case 'Photo::setStar':                  self::setPhotoStarAction(); break;
-			case 'Photo::setPublic':                self::setPhotoPublicAction(); break;
-			case 'Photo::setAlbum':                 self::setPhotoAlbumAction(); break;
-			case 'Photo::setTags':                  self::setPhotoTagsAction(); break;
-			case 'Photo::duplicate':                self::duplicatePhotoAction(); break;
-			case 'Photo::delete':                   self::deletePhotoAction(); break;
+            // Add functions
+            case 'Photo::add':self::uploadAction();
+                break;
+            case 'Import::url':self::importUrlAction();
+                break;
+            case 'Import::server':self::importServerAction();
+                break;
 
-			// Add functions
-			case 'Photo::add':                      self::uploadAction(); break;
-			case 'Import::url':                     self::importUrlAction(); break;
-			case 'Import::server':                  self::importServerAction(); break;
+            // Search functions
+            case 'search':self::searchAction();
+                break;
 
-			// Search functions
-			case 'search':                          self::searchAction(); break;
+            // Session functions
+            case 'Session::init':self::initAction();
+                break;
+            case 'Session::login':self::loginAction();
+                break;
+            case 'Session::logout':self::logoutAction();
+                break;
 
-			// Session functions
-			case 'Session::init':                   self::initAction(); break;
-			case 'Session::login':                  self::loginAction(); break;
-			case 'Session::logout':                 self::logoutAction(); break;
+            // Settings functions
+            case 'Settings::setLogin':self::setLoginAction();
+                break;
+            case 'Settings::setSorting':self::setSortingAction();
+                break;
+            case 'Settings::setDropboxKey':self::setDropboxKeyAction();
+                break;
 
-			// Settings functions
-			case 'Settings::setLogin':              self::setLoginAction(); break;
-			case 'Settings::setSorting':            self::setSortingAction(); break;
-			case 'Settings::setDropboxKey':         self::setDropboxKeyAction(); break;
+            // $_GET functions
+            case 'Album::getArchive':self::getAlbumArchiveAction();
+                break;
+            case 'Photo::getArchive':self::getPhotoArchiveAction();
+                break;
 
-			// $_GET functions
-			case 'Album::getArchive':               self::getAlbumArchiveAction(); break;
-			case 'Photo::getArchive':               self::getPhotoArchiveAction(); break;
+        }
 
-		}
+        self::fnNotFound();
 
-		self::fnNotFound();
+    }
 
-	}
-
-    // Slides functions 
-    private static function getSlidesAction() {
+    // Slides functions
+    private static function getSlidesAction()
+    {
 
         Validator::required(isset($_POST['albumID']), __METHOD__);
 
-		$slide = new Slide();
-		Response::json($slide->getSlides($_POST['albumID']));
+        $slide = new Slide();
+        Response::json($slide->getSlides($_POST['albumID']));
 
     }
 
-    private static function setPositionSlideshowAction() {
+    private static function setPositionSlideshowAction()
+    {
 
         Validator::required(isset($_POST['albumID'], $_POST['photoOrder']), __METHOD__);
 
-		$slide = new Slide();
-		Response::json($slide->setPosition());
+        $slide = new Slide();
+        Response::json($slide->setPosition());
 
     }
 
-    private static function getSlideAction() {
+    private static function getSlideAction()
+    {
 
         Validator::required(isset($_POST['slideID']), isset($_POST['albumID']), __METHOD__);
 
-		$slide = new Slide();
-		Response::json($slide->getSlide($_POST['slideID'], $_POST['albumID']));
+        $slide = new Slide();
+        Response::json($slide->getSlide($_POST['slideID'], $_POST['albumID']));
 
     }
 
-    private static function addToSlideshowAction() {
+    private static function addToSlideshowAction()
+    {
 
         Validator::required(isset($_POST['albumID'], $_POST['photoID']), __METHOD__);
+        if (!isset($_POST['folderID'])) {
+            $_POST['folderID'] = null;
+        }
 
-		$slide = new Slide();
-		Response::json($slide->add($_POST['albumID'], $_POST['photoID']));
+        $slide = new Slide();
+        Response::json($slide->add($_POST['albumID'], $_POST['photoID'], $_POST['folderID']));
 
     }
 
-    private static function deleteSlideAction() {
+    private static function deleteSlideAction()
+    {
 
         Validator::required(isset($_POST['slideIDs']), __METHOD__);
 
-		$slide = new Slide();
-		Response::json($slide->delete($_POST['slideIDs']));
+        $slide = new Slide();
+        Response::json($slide->delete($_POST['slideIDs']));
 
     }
-    
-    private static function setSlideNoteAction() {
-        
+
+    private static function setSlideNoteAction()
+    {
+
         Validator::required(isset($_POST['slideID']), isset($_POST['note']), __METHOD__);
 
-		$slide = new Slide();
-		Response::json($slide->setNote($_POST['slideID'], $_POST['note']));
+        $slide = new Slide();
+        Response::json($slide->setNote($_POST['slideID'], $_POST['note']));
 
     }
 
+    // Albums functions
 
-	// Albums functions
+    private static function getAlbumsAction()
+    {
 
-	private static function getAlbumsAction() {
-
-		$albums = new Albums();
-		Response::json($albums->get(false));
-
-    }
-    
-	// Album functions
-
-	private static function getAlbumAction() {
-
-		Validator::required(isset($_POST['albumID']), __METHOD__);
-
-		$album = new Album($_POST['albumID']);
-		Response::json($album->get());
+        $albums = new Albums();
+        Response::json($albums->get(false));
 
     }
-    
-	private static function addAlbumAction() {
 
-		Validator::required(isset($_POST['title']), __METHOD__);
+    // Album functions
 
-		$album = new Album(null);
-		Response::json($album->add($_POST['title']), JSON_NUMERIC_CHECK);
+    private static function getAlbumAction()
+    {
+        Validator::required(isset($_POST['albumID']), __METHOD__);
 
-	}
+        $album = new Album($_POST['albumID']);
 
-	private static function setAlbumTitleAction() {
+        if ($_POST['albumID'] === 's' || $_SESSION['identifier'] === $album->getIdentifier()) {
 
-		Validator::required(isset($_POST['albumIDs'], $_POST['title']), __METHOD__);
+            Response::json($album->get());
 
-		$album = new Album($_POST['albumIDs']);
-		Response::json($album->setTitle($_POST['title']));
+        } else if ($album->getPublic() === true) {
 
-	}
+            // Album public
+            if ($album->checkPassword($_POST['password']) === true) {
+                Response::json($album->get());
+            } else {
+                Response::warning('Input password!');
+            }
 
-	private static function setAlbumDescriptionAction() {
+        } else {
 
-		Validator::required(isset($_POST['albumID'], $_POST['description']), __METHOD__);
+            // Album private
+            Response::warning('Album private!');
 
-		$album = new Album($_POST['albumID']);
-		Response::json($album->setDescription($_POST['description']));
+        }
+    }
 
-	}
+    private static function checkAlbumAccessAction()
+    {
 
-	private static function setPositionAction() {
+        Validator::required(isset($_POST['albumID'], $_POST['password']), __METHOD__);
 
-		Validator::required(isset($_POST['albumID'],$_POST['photoOrder']), __METHOD__);
+        $album = new Album($_POST['albumID']);
 
-		$album = new Album($_POST['albumID']);
-		Response::json($album->setPosition());
+        if ($album->getPublic() === true) {
+
+            // Album public
+            if ($album->checkPassword($_POST['password']) === true) {
+                Response::json(true);
+            } else {
+                Response::json(false);
+            }
+
+        } else {
+
+            // Album private
+            Response::json(false);
+
+        }
 
     }
-    
-	private static function setAlbumPublicAction() {
 
-		Validator::required(isset($_POST['albumID'], $_POST['password'], $_POST['visible'], $_POST['downloadable']), __METHOD__);
+    private static function addAlbumAction()
+    {
 
-		$album = new Album($_POST['albumID']);
-		Response::json($album->setPublic($_POST['public'], $_POST['password'], $_POST['visible'], $_POST['downloadable']));
+        Validator::required(isset($_POST['title']), __METHOD__);
 
-	}
+        $album = new Album(null);
+        Response::json($album->add($_POST['title']), JSON_NUMERIC_CHECK);
 
-	private static function deleteAlbumAction() {
+    }
 
-		Validator::required(isset($_POST['albumIDs']), __METHOD__);
+    private static function setAlbumTitleAction()
+    {
 
-		$album = new Album($_POST['albumIDs']);
-		Response::json($album->delete());
+        Validator::required(isset($_POST['albumIDs'], $_POST['title']), __METHOD__);
 
-	}
+        $album = new Album($_POST['albumIDs']);
+        Response::json($album->setTitle($_POST['title']));
 
-	private static function mergeAlbumsAction() {
+    }
 
-		Validator::required(isset($_POST['albumIDs']), __METHOD__);
-		$album = new Album($_POST['albumIDs']);
-		Response::json($album->merge());
+    private static function setAlbumDescriptionAction()
+    {
 
-	}
+        Validator::required(isset($_POST['albumID'], $_POST['description']), __METHOD__);
 
-	// Photo functions
+        $album = new Album($_POST['albumID']);
+        Response::json($album->setDescription($_POST['description']));
 
-	private static function getPhotoAction() {
+    }
 
-		Validator::required(isset($_POST['photoID'], $_POST['albumID']), __METHOD__);
+    private static function setPositionAction()
+    {
 
-		$photo = new Photo($_POST['photoID']);
-		Response::json($photo->get($_POST['albumID']));
+        Validator::required(isset($_POST['albumID'], $_POST['photoOrder']), __METHOD__);
 
-	}
+        $album = new Album($_POST['albumID']);
+        Response::json($album->setPosition());
 
-	private static function setPhotoTitleAction() {
+    }
 
-		Validator::required(isset($_POST['photoIDs'], $_POST['title']), __METHOD__);
+    private static function setAlbumPublicAction()
+    {
 
-		$photo = new Photo($_POST['photoIDs']);
-		Response::json($photo->setTitle($_POST['title']));
+        Validator::required(isset($_POST['albumID'], $_POST['password'], $_POST['visible'], $_POST['downloadable']), __METHOD__);
 
-	}
+        $album = new Album($_POST['albumID']);
+        Response::json($album->setPublic($_POST['public'], $_POST['password'], $_POST['visible'], $_POST['downloadable']));
 
-	private static function setPhotoDescriptionAction() {
+    }
 
-		Validator::required(isset($_POST['photoID'], $_POST['description']), __METHOD__);
+    private static function deleteAlbumAction()
+    {
 
-		$photo = new Photo($_POST['photoID']);
-		Response::json($photo->setDescription($_POST['description']));
+        Validator::required(isset($_POST['albumIDs']), __METHOD__);
 
-	}
+        $album = new Album($_POST['albumIDs']);
+        Response::json($album->delete());
 
-	private static function setPhotoStarAction() {
+    }
 
-		Validator::required(isset($_POST['photoIDs']), __METHOD__);
+    private static function mergeAlbumsAction()
+    {
 
-		$photo = new Photo($_POST['photoIDs']);
-		Response::json($photo->setStar());
+        Validator::required(isset($_POST['albumIDs']), __METHOD__);
+        $album = new Album($_POST['albumIDs']);
+        Response::json($album->merge());
 
-	}
+    }
 
-	private static function setPhotoPublicAction() {
+    private static function addFolderAction()
+    {
 
-		Validator::required(isset($_POST['photoID']), __METHOD__);
+        Validator::required(isset($_POST['title'], $_POST['albumID']), __METHOD__);
+        // Validator::required(isset($_POST['parent_folder']), __METHOD__);
+        if (!isset($_POST['parent_folder'])) {
+            $_POST['parent_folder'] = null;
+        }
 
-		$photo = new Photo($_POST['photoID']);
-		Response::json($photo->setPublic());
+        $album = new Album($_POST['albumID']);
+        Response::json($album->addFolder($_POST['title'], $_POST['parent_folder']), JSON_NUMERIC_CHECK);
 
-	}
+    }
 
-	private static function setPhotoAlbumAction() {
+    private static function getFoldersAction()
+    {
 
-		Validator::required(isset($_POST['photoIDs'], $_POST['albumID']), __METHOD__);
+        Validator::required(isset($_POST['albumID']), __METHOD__);
 
-		$photo = new Photo($_POST['photoIDs']);
-		Response::json($photo->setAlbum($_POST['albumID']));
+        $album = new Album($_POST['albumID']);
+        Response::json($album->getFolders());
 
-	}
+    }
 
-	private static function setPhotoTagsAction() {
+    // Photo functions
 
-		Validator::required(isset($_POST['photoIDs'], $_POST['tags']), __METHOD__);
+    private static function getPhotoAction()
+    {
 
-		$photo = new Photo($_POST['photoIDs']);
-		Response::json($photo->setTags($_POST['tags']));
+        Validator::required(isset($_POST['photoID'], $_POST['albumID']), __METHOD__);
 
-	}
+        $photo = new Photo($_POST['photoID']);
+        Response::json($photo->get($_POST['albumID']));
 
-	private static function duplicatePhotoAction() {
+    }
 
-		Validator::required(isset($_POST['photoIDs']), __METHOD__);
+    private static function setPhotoTitleAction()
+    {
 
-		$photo = new Photo($_POST['photoIDs']);
-		Response::json($photo->duplicate());
+        Validator::required(isset($_POST['photoIDs'], $_POST['title']), __METHOD__);
 
-	}
+        $photo = new Photo($_POST['photoIDs']);
+        Response::json($photo->setTitle($_POST['title']));
 
-	private static function deletePhotoAction() {
+    }
 
-		Validator::required(isset($_POST['photoIDs']), __METHOD__);
+    private static function setPhotoDescriptionAction()
+    {
 
-		$photo = new Photo($_POST['photoIDs']);
-		Response::json($photo->delete());
+        Validator::required(isset($_POST['photoID'], $_POST['description']), __METHOD__);
 
-	}
+        $photo = new Photo($_POST['photoID']);
+        Response::json($photo->setDescription($_POST['description']));
 
-	// Add functions
+    }
 
-	private static function uploadAction() {
+    private static function setPhotoStarAction()
+    {
 
-		Validator::required(isset($_FILES, $_POST['albumID']), __METHOD__);
+        Validator::required(isset($_POST['photoIDs']), __METHOD__);
 
-		$photo = new Photo(null);
-		Response::json($photo->add($_FILES, $_POST['albumID']), JSON_NUMERIC_CHECK);
+        $photo = new Photo($_POST['photoIDs']);
+        Response::json($photo->setStar());
 
-	}
+    }
 
-	private static function importUrlAction() {
+    private static function setPhotoPublicAction()
+    {
 
-		Validator::required(isset($_POST['url'], $_POST['albumID']), __METHOD__);
+        Validator::required(isset($_POST['photoID']), __METHOD__);
 
-		$import = new Import();
-		Response::json($import->url($_POST['url'], $_POST['albumID']));
+        $photo = new Photo($_POST['photoID']);
+        Response::json($photo->setPublic());
 
-	}
+    }
 
-	private static function importServerAction() {
+    private static function setPhotoAlbumAction()
+    {
 
-		Validator::required(isset($_POST['albumID'], $_POST['path']), __METHOD__);
+        Validator::required(isset($_POST['photoIDs'], $_POST['albumID']), __METHOD__);
 
-		$import = new Import();
-		Response::json($import->server($_POST['path'], $_POST['albumID']));
+        $photo = new Photo($_POST['photoIDs']);
+        Response::json($photo->setAlbum($_POST['albumID']));
 
-	}
+    }
 
-	// Search functions
+    private static function setPhotoTagsAction()
+    {
 
-	private static function searchAction() {
+        Validator::required(isset($_POST['photoIDs'], $_POST['tags']), __METHOD__);
 
-		Validator::required(isset($_POST['term']), __METHOD__);
+        $photo = new Photo($_POST['photoIDs']);
+        Response::json($photo->setTags($_POST['tags']));
 
-		Response::json(search($_POST['term']));
+    }
 
-	}
+    private static function duplicatePhotoAction()
+    {
 
-	// Session functions
+        Validator::required(isset($_POST['photoIDs']), __METHOD__);
 
-	private static function initAction() {
+        $photo = new Photo($_POST['photoIDs']);
+        Response::json($photo->duplicate());
 
-		$session = new Session();
-		Response::json($session->init(false));
+    }
 
-	}
+    private static function deletePhotoAction()
+    {
 
-	private static function loginAction() {
+        Validator::required(isset($_POST['photoIDs']), __METHOD__);
 
-		Validator::required(isset($_POST['user'], $_POST['password']), __METHOD__);
+        $photo = new Photo($_POST['photoIDs']);
+        Response::json($photo->delete());
 
-		$session = new Session();
-		Response::json($session->login($_POST['user'], $_POST['password']));
+    }
 
-	}
+    // Add functions
 
-	private static function logoutAction() {
+    private static function uploadAction()
+    {
 
-		$session = new Session();
-		Response::json($session->logout());
+        Validator::required(isset($_FILES, $_POST['albumID']), __METHOD__);
 
-	}
+        $photo = new Photo(null);
+        Response::json($photo->add($_FILES, $_POST['albumID']), JSON_NUMERIC_CHECK);
 
-	// Settings functions
+    }
 
-	private static function setLoginAction() {
+    private static function importUrlAction()
+    {
 
-		Validator::required(isset($_POST['username'], $_POST['password']), __METHOD__);
+        Validator::required(isset($_POST['url'], $_POST['albumID']), __METHOD__);
 
-		if (isset($_POST['oldPassword'])===false) $_POST['oldPassword'] = '';
-		Response::json(Settings::setLogin($_POST['oldPassword'], $_POST['username'], $_POST['password']));
+        $import = new Import();
+        Response::json($import->url($_POST['url'], $_POST['albumID']));
 
-	}
+    }
 
-	private static function setSortingAction() {
+    private static function importServerAction()
+    {
 
-		Validator::required(isset($_POST['typeAlbums'], $_POST['orderAlbums'], $_POST['typePhotos'], $_POST['orderPhotos']), __METHOD__);
+        Validator::required(isset($_POST['albumID'], $_POST['path']), __METHOD__);
 
-		$sA = Settings::setSortingAlbums($_POST['typeAlbums'], $_POST['orderAlbums']);
-		$sP = Settings::setSortingPhotos($_POST['typePhotos'], $_POST['orderPhotos']);
+        $import = new Import();
+        Response::json($import->server($_POST['path'], $_POST['albumID']));
 
-		if ($sA===true&&$sP===true) Response::json(true);
-		else                        Response::json(false);
+    }
 
-	}
+    // Search functions
 
-	private static function setDropboxKeyAction() {
+    private static function searchAction()
+    {
 
-		Validator::required(isset($_POST['key']), __METHOD__);
+        Validator::required(isset($_POST['term']), __METHOD__);
 
-		Response::json(Settings::setDropboxKey($_POST['key']));
+        Response::json(search($_POST['term']));
 
-	}
+    }
 
-	// Get functions
+    // Session functions
 
-	private static function getAlbumArchiveAction() {
+    private static function initAction()
+    {
 
-		Validator::required(isset($_GET['albumID']), __METHOD__);
+        $session = new Session();
+        Response::json($session->init(false));
 
-		$album = new Album($_GET['albumID']);
-		$album->getArchive();
+    }
 
-	}
+    private static function loginAction()
+    {
 
-	private static function getPhotoArchiveAction() {
+        Validator::required(isset($_POST['user'], $_POST['password']), __METHOD__);
 
-		Validator::required(isset($_GET['photoID']), __METHOD__);
+        $session = new Session();
+        Response::json($session->login($_POST['user'], $_POST['password']));
 
-		$photo = new Photo($_GET['photoID']);
-		$photo->getArchive();
+    }
 
-	}
+    private static function logoutAction()
+    {
+
+        $session = new Session();
+        Response::json($session->logout());
+
+    }
+
+    // Settings functions
+
+    private static function setLoginAction()
+    {
+
+        Validator::required(isset($_POST['username'], $_POST['password']), __METHOD__);
+
+        if (isset($_POST['oldPassword']) === false) {
+            $_POST['oldPassword'] = '';
+        }
+
+        Response::json(Settings::setLogin($_POST['oldPassword'], $_POST['username'], $_POST['password']));
+
+    }
+
+    private static function setSortingAction()
+    {
+
+        Validator::required(isset($_POST['typeAlbums'], $_POST['orderAlbums'], $_POST['typePhotos'], $_POST['orderPhotos']), __METHOD__);
+
+        $sA = Settings::setSortingAlbums($_POST['typeAlbums'], $_POST['orderAlbums']);
+        $sP = Settings::setSortingPhotos($_POST['typePhotos'], $_POST['orderPhotos']);
+
+        if ($sA === true && $sP === true) {
+            Response::json(true);
+        } else {
+            Response::json(false);
+        }
+
+    }
+
+    private static function setDropboxKeyAction()
+    {
+
+        Validator::required(isset($_POST['key']), __METHOD__);
+
+        Response::json(Settings::setDropboxKey($_POST['key']));
+
+    }
+
+    // Get functions
+
+    private static function getAlbumArchiveAction()
+    {
+
+        Validator::required(isset($_GET['albumID']), __METHOD__);
+
+        $album = new Album($_GET['albumID']);
+        $album->getArchive();
+
+    }
+
+    private static function getPhotoArchiveAction()
+    {
+
+        Validator::required(isset($_GET['photoID']), __METHOD__);
+
+        $photo = new Photo($_GET['photoID']);
+        $photo->getArchive();
+
+    }
 
 }
-
-?>

@@ -56,7 +56,7 @@ function search($term) {
 		// For each thumb
 		$k = 0;
 		while ($thumb = $thumbs->fetch_object()) {
-			$album['thumbs'][$k] = PHOTOS_MANAGER_URL_UPLOADS_THUMB . $thumb->thumbUrl;
+			$album['thumbs'][$k] = $PHOTOS_MANAGER_URL_UPLOADS_THUMB . $thumb->thumbUrl;
 			$k++;
 		}
 

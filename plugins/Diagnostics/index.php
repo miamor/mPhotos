@@ -45,11 +45,11 @@ if (!extension_loaded('json'))     $error .= ('Error: PHP json extension not act
 if (!extension_loaded('zip'))      $error .= ('Error: PHP zip extension not activated' . PHP_EOL);
 
 // Permissions
-if (hasPermissions(PHOTOS_MANAGER_UPLOADS_BIG)===false)    $error .= ('Error: \'uploads/big\' is missing or has insufficient read/write privileges' . PHP_EOL);
-if (hasPermissions(PHOTOS_MANAGER_UPLOADS_MEDIUM)===false) $error .= ('Error: \'uploads/medium\' is missing or has insufficient read/write privileges' . PHP_EOL);
-if (hasPermissions(PHOTOS_MANAGER_UPLOADS_THUMB)===false)  $error .= ('Error: \'uploads/thumb\' is missing or has insufficient read/write privileges' . PHP_EOL);
-if (hasPermissions(PHOTOS_MANAGER_UPLOADS_IMPORT)===false) $error .= ('Error: \'uploads/import\' is missing or has insufficient read/write privileges' . PHP_EOL);
-if (hasPermissions(PHOTOS_MANAGER_UPLOADS)===false)        $error .= ('Error: \'uploads/\' is missing or has insufficient read/write privileges' . PHP_EOL);
+if (hasPermissions($PHOTOS_MANAGER_UPLOADS_BIG)===false)    $error .= ('Error: \'uploads/big\' is missing or has insufficient read/write privileges' . PHP_EOL);
+if (hasPermissions($PHOTOS_MANAGER_UPLOADS_MEDIUM)===false) $error .= ('Error: \'uploads/medium\' is missing or has insufficient read/write privileges' . PHP_EOL);
+if (hasPermissions($PHOTOS_MANAGER_UPLOADS_THUMB)===false)  $error .= ('Error: \'uploads/thumb\' is missing or has insufficient read/write privileges' . PHP_EOL);
+if (hasPermissions($PHOTOS_MANAGER_UPLOADS_IMPORT)===false) $error .= ('Error: \'uploads/import\' is missing or has insufficient read/write privileges' . PHP_EOL);
+if (hasPermissions($PHOTOS_MANAGER_UPLOADS)===false)        $error .= ('Error: \'uploads/\' is missing or has insufficient read/write privileges' . PHP_EOL);
 if (hasPermissions(PHOTOS_MANAGER_DATA)===false)           $error .= ('Error: \'data/\' is missing or has insufficient read/write privileges' . PHP_EOL);
 
 // About GD

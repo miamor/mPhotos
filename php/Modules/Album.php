@@ -4,686 +4,951 @@ namespace PhotosManager\Modules;
 
 use ZipArchive;
 
-final class Album {
+final class Album
+{
 
-	private $albumIDs = null;
+    private $albumIDs = null;
 
-	/**
-	 * @return boolean Returns true when successful.
-	 */
-	public function __construct($albumIDs) {
+    /**
+     * @return boolean Returns true when successful.
+     */
+    public function __construct($albumIDs)
+    {
 
-		// Init vars
-		$this->albumIDs = $albumIDs;
+        // Init vars
+        $this->albumIDs = $albumIDs;
 
-		return true;
+        return true;
 
-	}
+    }
 
-	/**
-	 * @return string|false ID of the created album.
-	 */
-	public function add($title = 'Untitled') {
+    /**
+     * @return string|false ID of the created album.
+     */
+    public function addFolder($title = 'Untitled', $parent_folder = null)
+    {
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-		// Properties
-		$id       = generateID();
-		$sysstamp = time();
-		$public   = 0;
-		$visible  = 1;
+        // Properties
+        $id = generateID();
+        $sysstamp = time();
 
-		// Database
-		$query  = Database::prepare(Database::get(), "INSERT INTO ? (id, title, sysstamp, public, visible) VALUES ('?', '?', '?', '?', '?')", array(PHOTOS_MANAGER_TABLE_ALBUMS, $id, $title, $sysstamp, $public, $visible));
-		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        // Database
+        $query = Database::prepare(Database::get(), "INSERT INTO ? (id, title, album_id, parent_folder) VALUES ('?', '?', '?', '?')", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $id, $title, $this->albumIDs, $parent_folder));
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-		if ($result===false) return false;
-		return $id;
+        // return array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $id, $title, $this->albumIDs);
 
-	}
+        if ($result === false) {
+            return false;
+        }
 
+        return Slide::getSlides($this->albumIDs);
 
-	/**
-	 * Rurns album-attributes into a front-end friendly format. Note that some attributes remain unchanged.
-	 * @return array Returns album-attributes in a normalized structure.
-	 */
-	public static function prepareData(array $data) {
+    }
 
-		// This function requires the following album-attributes and turns them
-		// into a front-end friendly format: id, title, public, sysstamp, password
-		// Note that some attributes remain unchanged
+    /**
+     * @return string|false ID of the created album.
+     */
+    public function getFolders()
+    {
 
-		// Init
-		$album = null;
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-		// Set unchanged attributes
-		$album['id']     = $data['id'];
-		$album['title']  = $data['title'];
-		$album['public'] = $data['public'];
+        // Database
+        $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE album_id = ? ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $this->albumIDs));
+        $folders = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
-		// Additional attributes
-		// Only part of $album when available
-		if (isset($data['description']))  $album['description'] = $data['description'];
-		if (isset($data['visible']))      $album['visible'] = $data['visible'];
-		if (isset($data['downloadable'])) $album['downloadable'] = $data['downloadable'];
+        $result = array();
+        while ($folder = $folders->fetch_assoc()) {
+            $result[] = $folder;
+        }
 
-		// Parse date
-		$album['sysdate'] = strftime('%B %Y', $data['sysstamp']);
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-		// Parse password
-		$album['password'] = ($data['password']=='' ? '0' : '1');
+        // return array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $id, $title, $this->albumIDs);
 
-		// Parse thumbs or set default value
-		$album['thumbs'] = (isset($data['thumbs']) ? explode(',', $data['thumbs']) : array());
+        if ($result === false) {
+            return false;
+        }
 
-		return $album;
+        return $result;
 
-	}
+    }
 
+    public function getFolders__()
+    {
+        $allow_delete = true; // Set to false to disable delete button and delete POST request.
+        $allow_upload = true; // Set to true to allow upload files
+        $allow_create_folder = true; // Set to false to disable folder creation
+        $allow_direct_link = true; // Set to false to only allow downloads and not direct link
+        $allow_show_folders = true; // Set to false to hide all subdirectories
 
-	/**
-	 * @return array|false Returns an array of photos and album information or false on failure.
-	 */
-	public function get() {
+        $disallowed_extensions = ['php']; // must be an array. Extensions disallowed to be uploaded
+        $hidden_extensions = ['php']; // must be an array of lowercase file extensions. Extensions hidden in directory index
 
-		// Check dependencies
-		Validator::required(isset($this->albumIDs), __METHOD__);
+        $directory = '/media/tunguyen/Devs/htdocs/mPhotos/uploads/TuTu';
+        $result = [];
+        $files = array_diff(scandir($directory), ['.', '..']);
+        foreach ($files as $entry) {
+            if (!is_entry_ignored($entry, $allow_show_folders, $hidden_extensions)) {
+                $i = $directory . '/' . $entry;
+                $stat = stat($i);
+                $result[] = [
+                    'mtime' => $stat['mtime'],
+                    'size' => $stat['size'],
+                    'name' => basename($i),
+                    'path' => preg_replace('@^\./@', '', $i),
+                    'is_dir' => is_dir($i),
+                    'is_deleteable' => $allow_delete && ((!is_dir($i) && is_writable($directory)) ||
+                        (is_dir($i) && is_writable($directory) && is_recursively_deleteable($i))),
+                    'is_readable' => is_readable($i),
+                    'is_writable' => is_writable($i),
+                    'is_executable' => is_executable($i),
+                ];
+            }
+        }
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+        return $result;
+    }
 
-		// Get album information
-		switch ($this->albumIDs) {
+    /**
+     * @return string|false ID of the created album.
+     */
+    public function add($title = 'Untitled')
+    {
 
-			case 'f':
-				$return['public'] = '0';
-				$query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE star = 1 " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
-				break;
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-			case 's':
-				$return['public'] = '1';
-				$query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE public = 1 " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
-				break;
+        // Properties
+        $id = generateID();
+        $sysstamp = time();
+        $public = 0;
+        $visible = 1;
 
-			case 'r':
-				$return['public'] = '0';
-				$query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
-				break;
+        // Database
+        $query = Database::prepare(Database::get(), "INSERT INTO ? (id, user_identifier, title, sysstamp, public, visible) VALUES ('?', '?', '?', '?', '?', '?')", array(PHOTOS_MANAGER_TABLE_ALBUMS, $id, $_SESSION['identifier'], $title, $sysstamp, $public, $visible));
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
-			case '0':
-				$return['public'] = '0';
-				$query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE album = 0 " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
-				break;
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-			default:
-				$query  = Database::prepare(Database::get(), "SELECT * FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
-				$albums = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
-				$return = $albums->fetch_assoc();
-				$return = Album::prepareData($return);
-				$query  = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE album = '?' " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
-				break;
+        if ($result === false) {
+            return false;
+        }
 
-		}
+        $PHOTOS_MANAGER_UPLOADS = PHOTOS_MANAGER_UPLOADS . '/' . $id;
+        if (!file_exists($PHOTOS_MANAGER_UPLOADS)) {
+            mkdir($PHOTOS_MANAGER_UPLOADS, 0777, true);
+            mkdir($PHOTOS_MANAGER_UPLOADS . '/big', 0777, true);
+            mkdir($PHOTOS_MANAGER_UPLOADS . '/thumb', 0777, true);
+            mkdir($PHOTOS_MANAGER_UPLOADS . '/medium', 0777, true);
+            mkdir($PHOTOS_MANAGER_UPLOADS . '/import', 0777, true);
+        }
 
-		// Get photos
-		$photos          = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
-		$previousPhotoID = '';
+        return $id;
 
-		if ($photos===false) return false;
+    }
 
-		while ($photo = $photos->fetch_assoc()) {
+    /**
+     * Rurns album-attributes into a front-end friendly format. Note that some attributes remain unchanged.
+     * @return array Returns album-attributes in a normalized structure.
+     */
+    public static function prepareData(array $data)
+    {
 
-			// Turn data from the database into a front-end friendly format
-			$photo = Photo::prepareData($photo);
+        // This function requires the following album-attributes and turns them
+        // into a front-end friendly format: id, title, public, sysstamp, password
+        // Note that some attributes remain unchanged
 
-			// Set previous and next photoID for navigation purposes
-			$photo['previousPhoto'] = $previousPhotoID;
-			$photo['nextPhoto']     = '';
+        // Init
+        $album = null;
 
-			// Set current photoID as nextPhoto of previous photo
-			if ($previousPhotoID!=='') $return['content'][$previousPhotoID]['nextPhoto'] = $photo['id'];
-			$previousPhotoID = $photo['id'];
+        // Set unchanged attributes
+        $album['id'] = $data['id'];
+        $album['title'] = $data['title'];
+        $album['public'] = $data['public'];
+        $album['user_identifier'] = $data['user_identifier'];
 
-			// Add to return
-			$return['content'][$photo['id']] = $photo;
+        // Additional attributes
+        // Only part of $album when available
+        if (isset($data['description'])) {
+            $album['description'] = $data['description'];
+        }
 
-		}
+        if (isset($data['visible'])) {
+            $album['visible'] = $data['visible'];
+        }
 
-		if ($photos->num_rows===0) {
+        if (isset($data['downloadable'])) {
+            $album['downloadable'] = $data['downloadable'];
+        }
 
-			// Album empty
-			$return['content'] = false;
+        // Parse date
+        $album['sysdate'] = strftime('%B %Y', $data['sysstamp']);
 
-		} else {
+        // Parse password
+        $album['password'] = ($data['password'] == '' ? '0' : '1');
 
-			// Enable next and previous for the first and last photo
-			$lastElement    = end($return['content']);
-			$lastElementId  = $lastElement['id'];
-			$firstElement   = reset($return['content']);
-			$firstElementId = $firstElement['id'];
+        // Parse thumbs or set default value
+        $album['thumbs'] = (isset($data['thumbs']) ? explode(',', $data['thumbs']) : array());
 
-			if ($lastElementId!==$firstElementId) {
-				$return['content'][$lastElementId]['nextPhoto']      = $firstElementId;
-				$return['content'][$firstElementId]['previousPhoto'] = $lastElementId;
-			}
+        return $album;
 
-		}
+    }
 
-		$return['id']  = $this->albumIDs;
+    /**
+     * @return array|false Returns an array of photos and album information or false on failure.
+     */
+    public function get()
+    {
+
+        // Check dependencies
+        Validator::required(isset($this->albumIDs), __METHOD__);
+
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
+
+        // Get album information
+        switch ($this->albumIDs) {
+
+            case 'f':
+                $return['public'] = '0';
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE star = 1 " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                break;
+
+            case 's':
+                $return['public'] = '1';
+                // $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE public = 1 OR album = 0 " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE public = 1 " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                break;
+
+            case 'r':
+                $return['public'] = '0';
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                break;
+
+            case '0':
+                $return['public'] = '0';
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE album = 0 " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                break;
+
+            default:
+                $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
+                $albums = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+                $return = $albums->fetch_assoc();
+                $return = Album::prepareData($return);
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE album = '?' ORDER BY position ASC, id DESC", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
+                break;
+
+        }
+
+        // Get photos
+        $photos = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        $previousPhotoID = '';
+
+        if ($photos === false) {
+            return false;
+        }
+
+        while ($photo = $photos->fetch_assoc()) {
+
+            // Turn data from the database into a front-end friendly format
+            $photo = Photo::prepareData($photo);
+
+            // Set previous and next photoID for navigation purposes
+            $photo['previousPhoto'] = $previousPhotoID;
+            $photo['nextPhoto'] = '';
+
+            // Set current photoID as nextPhoto of previous photo
+            if ($previousPhotoID !== '') {
+                $return['content'][$previousPhotoID]['nextPhoto'] = $photo['id'];
+            }
+
+            $previousPhotoID = $photo['id'];
+
+            // Add to return
+            $return['content'][$photo['id']] = $photo;
+
+        }
+
+        if ($photos->num_rows === 0) {
+
+            // Album empty
+            $return['content'] = false;
+
+        } else {
+
+            // Enable next and previous for the first and last photo
+            $lastElement = end($return['content']);
+            $lastElementId = $lastElement['id'];
+            $firstElement = reset($return['content']);
+            $firstElementId = $firstElement['id'];
+
+            if ($lastElementId !== $firstElementId) {
+                $return['content'][$lastElementId]['nextPhoto'] = $firstElementId;
+                $return['content'][$firstElementId]['previousPhoto'] = $lastElementId;
+            }
+
+        }
+
+        $return['id'] = $this->albumIDs;
         $return['num'] = $photos->num_rows;
-        
+
         $return['slides'] = Slide::getSlides($this->albumIDs);
+        $return['folders'] = array();
+
+        if (!in_array($return['id'], array('0', 's', 'f', 'r'))) {
+            $return['folders'] = self::getFolders();
+        }
+
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
+
+        return $return;
+
+    }
+
+    /**
+     * Starts a download of an album.
+     * @return resource|boolean Sends a ZIP-file or returns false on failure.
+     */
+    public function getArchive()
+    {
+
+        // Check dependencies
+        Validator::required(isset($this->albumIDs), __METHOD__);
+
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
+
+        // Illicit chars
+        $badChars = array_merge(
+            array_map('chr', range(0, 31)),
+            array("<", ">", ":", '"', "/", "\\", "|", "?", "*")
+        );
+
+        // Photos query
+        switch ($this->albumIDs) {
+            case 's':
+                $photos = Database::prepare(Database::get(), 'SELECT title, url FROM ? WHERE public = 1', array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $zipTitle = 'Public';
+                break;
+            case 'f':
+                $photos = Database::prepare(Database::get(), 'SELECT title, url FROM ? WHERE star = 1', array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $zipTitle = 'Starred';
+                break;
+            case 'r':
+                $photos = Database::prepare(Database::get(), 'SELECT title, url FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) GROUP BY checksum', array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $zipTitle = 'Recent';
+                break;
+            default:
+                $photos = Database::prepare(Database::get(), "SELECT title, url FROM ? WHERE album = '?'", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
+                $zipTitle = 'Unsorted';
+        }
+
+        // Get title from database when album is not a SmartAlbum
+        if ($this->albumIDs != 0 && is_numeric($this->albumIDs)) {
+
+            $query = Database::prepare(Database::get(), "SELECT title FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
+            $album = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+
+            if ($album === false) {
+                return false;
+            }
+
+            // Get album object
+            $album = $album->fetch_object();
 
-        
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
-
-		return $return;
-
-	}
-
-	/**
-	 * Starts a download of an album.
-	 * @return resource|boolean Sends a ZIP-file or returns false on failure.
-	 */
-	public function getArchive() {
-
-		// Check dependencies
-		Validator::required(isset($this->albumIDs), __METHOD__);
-
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+            // Album not found?
+            if ($album === null) {
+                Log::error(Database::get(), __METHOD__, __LINE__, 'Could not find specified album');
+                return false;
+            }
+
+            // Set title
+            $zipTitle = $album->title;
 
-		// Illicit chars
-		$badChars =	array_merge(
-			array_map('chr', range(0,31)),
-			array("<", ">", ":", '"', "/", "\\", "|", "?", "*")
-		);
+        }
 
-		// Photos query
-		switch($this->albumIDs) {
-			case 's':
-				$photos   = Database::prepare(Database::get(), 'SELECT title, url FROM ? WHERE public = 1', array(PHOTOS_MANAGER_TABLE_PHOTOS));
-				$zipTitle = 'Public';
-				break;
-			case 'f':
-				$photos   = Database::prepare(Database::get(), 'SELECT title, url FROM ? WHERE star = 1', array(PHOTOS_MANAGER_TABLE_PHOTOS));
-				$zipTitle = 'Starred';
-				break;
-			case 'r':
-				$photos   = Database::prepare(Database::get(), 'SELECT title, url FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) GROUP BY checksum', array(PHOTOS_MANAGER_TABLE_PHOTOS));
-				$zipTitle = 'Recent';
-				break;
-			default:
-				$photos   = Database::prepare(Database::get(), "SELECT title, url FROM ? WHERE album = '?'", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
-				$zipTitle = 'Unsorted';
-		}
+        // Escape title
+        $zipTitle = str_replace($badChars, '', $zipTitle);
 
-		// Get title from database when album is not a SmartAlbum
-		if ($this->albumIDs!=0&&is_numeric($this->albumIDs)) {
+        $filename = PHOTOS_MANAGER_DATA . $zipTitle . '.zip';
 
-			$query = Database::prepare(Database::get(), "SELECT title FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
-			$album = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        // Create zip
+        $zip = new ZipArchive();
+        if ($zip->open($filename, ZIPARCHIVE::CREATE) !== true) {
+            Log::error(Database::get(), __METHOD__, __LINE__, 'Could not create ZipArchive');
+            return false;
+        }
 
-			if ($album===false) return false;
+        // Execute query
+        $photos = Database::execute(Database::get(), $photos, __METHOD__, __LINE__);
 
-			// Get album object
-			$album = $album->fetch_object();
+        // Check if album empty
+        if ($photos->num_rows == 0) {
+            Log::error(Database::get(), __METHOD__, __LINE__, 'Could not create ZipArchive without images');
+            return false;
+        }
 
-			// Album not found?
-			if ($album===null) {
-				Log::error(Database::get(), __METHOD__, __LINE__, 'Could not find specified album');
-				return false;
-			}
+        // Parse each path
+        $files = array();
+        while ($photo = $photos->fetch_object()) {
 
-			// Set title
-			$zipTitle = $album->title;
+            $PHOTOS_MANAGER_URL_UPLOADS_BIG = PHOTOS_MANAGER_URL_UPLOADS_BIG;
+            if ($photo['album'] != 0) {
+                $PHOTOS_MANAGER_URL_UPLOADS_BIG = PHOTOS_MANAGER_URL_UPLOADS . $photo->album . '/big/';
+            }
 
-		}
+            // Parse url
+            $photo->url = $PHOTOS_MANAGER_URL_UPLOADS_BIG . $photo->url;
 
-		// Escape title
-		$zipTitle = str_replace($badChars, '', $zipTitle);
+            // Parse title
+            $photo->title = str_replace($badChars, '', $photo->title);
+            if (!isset($photo->title) || $photo->title === '') {
+                $photo->title = 'Untitled';
+            }
 
-		$filename = PHOTOS_MANAGER_DATA . $zipTitle . '.zip';
+            // Check if readable
+            if (!@is_readable($photo->url)) {
+                continue;
+            }
 
-		// Create zip
-		$zip = new ZipArchive();
-		if ($zip->open($filename, ZIPARCHIVE::CREATE)!==TRUE) {
-			Log::error(Database::get(), __METHOD__, __LINE__, 'Could not create ZipArchive');
-			return false;
-		}
+            // Get extension of image
+            $extension = getExtension($photo->url, false);
 
-		// Execute query
-		$photos = Database::execute(Database::get(), $photos, __METHOD__, __LINE__);
+            // Set title for photo
+            $zipFileName = $zipTitle . '/' . $photo->title . $extension;
 
-		// Check if album empty
-		if ($photos->num_rows==0) {
-			Log::error(Database::get(), __METHOD__, __LINE__, 'Could not create ZipArchive without images');
-			return false;
-		}
+            // Check for duplicates
+            if (!empty($files)) {
+                $i = 1;
+                while (in_array($zipFileName, $files)) {
 
-		// Parse each path
-		$files = array();
-		while ($photo = $photos->fetch_object()) {
+                    // Set new title for photo
+                    $zipFileName = $zipTitle . '/' . $photo->title . '-' . $i . $extension;
 
-			// Parse url
-			$photo->url = PHOTOS_MANAGER_UPLOADS_BIG . $photo->url;
+                    $i++;
 
-			// Parse title
-			$photo->title = str_replace($badChars, '', $photo->title);
-			if (!isset($photo->title)||$photo->title==='') $photo->title = 'Untitled';
+                }
+            }
 
-			// Check if readable
-			if (!@is_readable($photo->url)) continue;
+            // Add to array
+            $files[] = $zipFileName;
 
-			// Get extension of image
-			$extension = getExtension($photo->url, false);
+            // Add photo to zip
+            $zip->addFile($photo->url, $zipFileName);
 
-			// Set title for photo
-			$zipFileName = $zipTitle . '/' . $photo->title . $extension;
+        }
 
-			// Check for duplicates
-			if (!empty($files)) {
-				$i = 1;
-				while (in_array($zipFileName, $files)) {
+        // Finish zip
+        $zip->close();
 
-					// Set new title for photo
-					$zipFileName = $zipTitle . '/' . $photo->title . '-' . $i . $extension;
+        // Send zip
+        header("Content-Type: application/zip");
+        header("Content-Disposition: attachment; filename=\"$zipTitle.zip\"");
+        header("Content-Length: " . filesize($filename));
+        readfile($filename);
 
-					$i++;
+        // Delete zip
+        unlink($filename);
 
-				}
-			}
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-			// Add to array
-			$files[] = $zipFileName;
+        return true;
 
-			// Add photo to zip
-			$zip->addFile($photo->url, $zipFileName);
+    }
 
-		}
+    /**
+     * @return boolean Returns true when successful.
+     */
+    public function setTitle($title = 'Untitled')
+    {
 
-		// Finish zip
-		$zip->close();
+        // Check dependencies
+        Validator::required(isset($this->albumIDs), __METHOD__);
 
-		// Send zip
-		header("Content-Type: application/zip");
-		header("Content-Disposition: attachment; filename=\"$zipTitle.zip\"");
-		header("Content-Length: " . filesize($filename));
-		readfile($filename);
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-		// Delete zip
-		unlink($filename);
+        // Execute query
+        $query = Database::prepare(Database::get(), "UPDATE ? SET title = '?' WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_ALBUMS, $title, $this->albumIDs));
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-		return true;
+        if ($result === false) {
+            return false;
+        }
 
-	}
+        return true;
 
-	/**
-	 * @return boolean Returns true when successful.
-	 */
-	public function setTitle($title = 'Untitled') {
+    }
 
-		// Check dependencies
-		Validator::required(isset($this->albumIDs), __METHOD__);
+    public function setPosition()
+    {
+        // Check dependencies
+        Validator::required(isset($_POST['photoOrder']), __METHOD__);
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-		// Execute query
-		$query  = Database::prepare(Database::get(), "UPDATE ? SET title = '?' WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_ALBUMS, $title, $this->albumIDs));
-		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        $id_list = implode(',', $_POST['photoOrder']);
+        $indices = [];
+        $size = count(explode(',', $id_list));
+        for ($i = 0; $i < $size; $i++) {
+            $indices[$i] = $i;
+        }
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+        $whens = implode(
+            "  ",
+            array_map(
+                function ($id, $value) {
+                    return "WHEN {$id} THEN {$value}";
+                },
+                explode(',', $id_list),
+                $indices
+            )
+        );
 
-		if ($result===false) return false;
-		return true;
+        $query = Database::prepare(Database::get(), "UPDATE ? SET position = CASE id ? END WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_PHOTOS, $whens, $id_list));
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
-	}
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-	public function setPosition(){
-		// Check dependencies
-		Validator::required(isset($_POST['photoOrder']), __METHOD__);
+        if ($result === false) {
+            return false;
+        }
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+        return true;
+    }
 
-		$id_list = implode(',', $_POST['photoOrder']);
-		$indices = [];
-		$size = count(explode(',',$id_list));
-		for($i = 0; $i < $size; $i++){
-			$indices[$i] = $i;
-		}
+    /**
+     * @return boolean Returns true when successful.
+     */
+    public function setDescription($description = '')
+    {
 
-		$whens = implode(
-			"  ",
-			array_map(
-				function ($id, $value) {
-					return "WHEN {$id} THEN {$value}";
-				},
-				explode(',',$id_list),
-				$indices
-			)
-		);
+        // Check dependencies
+        Validator::required(isset($this->albumIDs), __METHOD__);
 
-		$query  = Database::prepare(Database::get(), "UPDATE ? SET position = CASE id ? END WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_PHOTOS, $whens, $id_list));
-		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+        // Execute query
+        $query = Database::prepare(Database::get(), "UPDATE ? SET description = '?' WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_ALBUMS, $description, $this->albumIDs));
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
-		if ($result===false) return false;
-		return true;
-	}
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-	/**
-	 * @return boolean Returns true when successful.
-	 */
-	public function setDescription($description = '') {
+        if ($result === false) {
+            return false;
+        }
 
-		// Check dependencies
-		Validator::required(isset($this->albumIDs), __METHOD__);
+        return true;
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+    }
 
-		// Execute query
-		$query  = Database::prepare(Database::get(), "UPDATE ? SET description = '?' WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_ALBUMS, $description, $this->albumIDs));
-		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+    public function getIdentifier()
+    {
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+        // Check dependencies
+        Validator::required(isset($this->albumIDs), __METHOD__);
 
-		if ($result===false) return false;
-		return true;
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-	}
+        if ($this->albumIDs === '0' || $this->albumIDs === 's' || $this->albumIDs === 'f') {
+            return false;
+        }
 
-	/**
-	 * @return boolean Returns true when the album is public.
-	 */
-	public function getPublic() {
+        // Execute query
+        $query = Database::prepare(Database::get(), "SELECT user_identifier FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
+        $albums = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
-		// Check dependencies
-		Validator::required(isset($this->albumIDs), __METHOD__);
+        if ($albums === false) {
+            return false;
+        }
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+        // Get album object
+        $album = $albums->fetch_object();
 
-		if ($this->albumIDs==='0'||$this->albumIDs==='s'||$this->albumIDs==='f') return false;
+        // Album not found?
+        if ($album === null) {
+            Log::error(Database::get(), __METHOD__, __LINE__, 'Could not find specified album');
+            return false;
+        }
 
-		// Execute query
-		$query  = Database::prepare(Database::get(), "SELECT public FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
-		$albums = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-		if ($albums===false) return false;
+        return $album->user_identifier;
 
-		// Get album object
-		$album = $albums->fetch_object();
+    }
 
-		// Album not found?
-		if ($album===null) {
-			Log::error(Database::get(), __METHOD__, __LINE__, 'Could not find specified album');
-			return false;
-		}
+    /**
+     * @return boolean Returns true when the album is public.
+     */
+    public function getPublic()
+    {
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+        // Check dependencies
+        Validator::required(isset($this->albumIDs), __METHOD__);
 
-		if ($album->public==1) return true;
-		return false;
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-	}
+        if ($this->albumIDs === '0' || $this->albumIDs === 's' || $this->albumIDs === 'f') {
+            return false;
+        }
 
-	/**
-	 * @return boolean Returns true when the album is downloadable.
-	 */
-	public function getDownloadable() {
+        // Execute query
+        $query = Database::prepare(Database::get(), "SELECT public FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
+        $albums = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
-		// Check dependencies
-		Validator::required(isset($this->albumIDs), __METHOD__);
+        if ($albums === false) {
+            return false;
+        }
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+        // Get album object
+        $album = $albums->fetch_object();
 
-		if ($this->albumIDs==='0'||$this->albumIDs==='s'||$this->albumIDs==='f'||$this->albumIDs==='r') return false;
+        // Album not found?
+        if ($album === null) {
+            Log::error(Database::get(), __METHOD__, __LINE__, 'Could not find specified album');
+            return false;
+        }
 
-		// Execute query
-		$query  = Database::prepare(Database::get(), "SELECT downloadable FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
-		$albums = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-		if ($albums===false) return false;
+        if ($album->public == 1) {
+            return true;
+        }
 
-		// Get album object
-		$album = $albums->fetch_object();
+        return false;
 
-		// Album not found?
-		if ($album===null) {
-			Log::error(Database::get(), __METHOD__, __LINE__, 'Could not find specified album');
-			return false;
-		}
+    }
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+    /**
+     * @return boolean Returns true when the album is downloadable.
+     */
+    public function getDownloadable()
+    {
 
-		if ($album->downloadable==1) return true;
-		return false;
+        // Check dependencies
+        Validator::required(isset($this->albumIDs), __METHOD__);
 
-	}
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-	/**
-	 * @return boolean Returns true when successful.
-	 */
-	public function setPublic($public, $password, $visible, $downloadable) {
+        if ($this->albumIDs === '0' || $this->albumIDs === 's' || $this->albumIDs === 'f' || $this->albumIDs === 'r') {
+            return false;
+        }
 
-		// Check dependencies
-		Validator::required(isset($this->albumIDs), __METHOD__);
+        // Execute query
+        $query = Database::prepare(Database::get(), "SELECT downloadable FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
+        $albums = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+        if ($albums === false) {
+            return false;
+        }
 
-		// Convert values
-		$public       = ($public==='1' ? 1 : 0);
-		$visible      = ($visible==='1' ? 1 : 0);
-		$downloadable = ($downloadable==='1' ? 1 : 0);
+        // Get album object
+        $album = $albums->fetch_object();
 
-		// Set public
-		$query  = Database::prepare(Database::get(), "UPDATE ? SET public = '?', visible = '?', downloadable = '?', password = NULL WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_ALBUMS, $public, $visible, $downloadable, $this->albumIDs));
-		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        // Album not found?
+        if ($album === null) {
+            Log::error(Database::get(), __METHOD__, __LINE__, 'Could not find specified album');
+            return false;
+        }
 
-		if ($result===false) return false;
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-		// Reset permissions for photos
-		if ($public===1) {
+        if ($album->downloadable == 1) {
+            return true;
+        }
 
-			$query  = Database::prepare(Database::get(), "UPDATE ? SET public = 0 WHERE album IN (?)", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
-			$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        return false;
 
-			if ($result===false) return false;
+    }
 
-		}
+    /**
+     * @return boolean Returns true when successful.
+     */
+    public function setPublic($public, $password, $visible, $downloadable)
+    {
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+        // Check dependencies
+        Validator::required(isset($this->albumIDs), __METHOD__);
 
-		// Set password
-		if (isset($password)&&strlen($password)>0) return $this->setPassword($password);
-		return true;
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-	}
+        // Convert values
+        $public = ($public === '1' ? 1 : 0);
+        $visible = ($visible === '1' ? 1 : 0);
+        $downloadable = ($downloadable === '1' ? 1 : 0);
 
-	/**
-	 * @return boolean Returns true when successful.
-	 */
-	private function setPassword($password) {
+        // Set public
+        $query = Database::prepare(Database::get(), "UPDATE ? SET public = '?', visible = '?', downloadable = '?', password = NULL WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_ALBUMS, $public, $visible, $downloadable, $this->albumIDs));
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
-		// Check dependencies
-		Validator::required(isset($this->albumIDs), __METHOD__);
+        if ($result === false) {
+            return false;
+        }
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+        // Reset permissions for photos
+        if ($public === 1) {
 
-		if (strlen($password)>0) {
+            $query = Database::prepare(Database::get(), "UPDATE ? SET public = 0 WHERE album IN (?)", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
+            $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
-			// Get hashed password
-			$password = getHashedString($password);
+            if ($result === false) {
+                return false;
+            }
 
-			// Set hashed password
-			// Do not prepare $password because it is hashed and save
-			// Preparing (escaping) the password would destroy the hash
-			$query = Database::prepare(Database::get(), "UPDATE ? SET password = '$password' WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
+        }
 
-		} else {
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-			// Unset password
-			$query = Database::prepare(Database::get(), "UPDATE ? SET password = NULL WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
+        // Set password
+        if (isset($password) && strlen($password) > 0) {
+            return $this->setPassword($password);
+        }
 
-		}
+        return true;
 
-		// Execute query
-		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+    }
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+    /**
+     * @return boolean Returns true when successful.
+     */
+    private function setPassword($password)
+    {
 
-		if ($result===false) return false;
-		return true;
+        // Check dependencies
+        Validator::required(isset($this->albumIDs), __METHOD__);
 
-	}
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-	/**
-	 * @return boolean Returns when album is public.
-	 */
-	public function checkPassword($password) {
+        if (strlen($password) > 0) {
 
-		// Check dependencies
-		Validator::required(isset($this->albumIDs), __METHOD__);
+            // Get hashed password
+            $password = getHashedString($password);
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+            // Set hashed password
+            // Do not prepare $password because it is hashed and save
+            // Preparing (escaping) the password would destroy the hash
+            $query = Database::prepare(Database::get(), "UPDATE ? SET password = '$password' WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
 
-		// Execute query
-		$query  = Database::prepare(Database::get(), "SELECT password FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
-		$albums = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        } else {
 
-		if ($albums===false) return false;
+            // Unset password
+            $query = Database::prepare(Database::get(), "UPDATE ? SET password = NULL WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
 
-		// Get album object
-		$album = $albums->fetch_object();
+        }
 
-		// Album not found?
-		if ($album===null) {
-			Log::error(Database::get(), __METHOD__, __LINE__, 'Could not find specified album');
-			return false;
-		}
+        // Execute query
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-		// Check if password is correct
-		if ($album->password=='') return true;
-		if ($album->password===crypt($password, $album->password)) return true;
-		return false;
+        if ($result === false) {
+            return false;
+        }
 
-	}
+        return true;
 
-	/**
-	 * @return boolean Returns true when successful.
-	 */
-	public function merge() {
+    }
 
-		// Check dependencies
-		Validator::required(isset($this->albumIDs), __METHOD__);
+    /**
+     * @return boolean Returns when album is public.
+     */
+    public function checkPassword($password)
+    {
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+        // Check dependencies
+        Validator::required(isset($this->albumIDs), __METHOD__);
 
-		// Convert to array
-		$albumIDs = explode(',', $this->albumIDs);
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-		// Get first albumID
-		$albumID = array_splice($albumIDs, 0, 1);
-		$albumID = $albumID[0];
+        // Execute query
+        $query = Database::prepare(Database::get(), "SELECT password FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
+        $albums = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
+        if ($albums === false) {
+            return false;
+        }
 
-		$query  = Database::prepare(Database::get(), "DELETE FROM ? WHERE album_id IN (?)", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $filteredIDs));
-		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
-		if ($result===false) return false;
+        // Get album object
+        $album = $albums->fetch_object();
 
-        $query  = Database::prepare(Database::get(), "UPDATE ? SET album = ? WHERE album IN (?)", array(PHOTOS_MANAGER_TABLE_PHOTOS, $albumID, $this->albumIDs));
-		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
-		if ($result===false) return false;
+        // Album not found?
+        if ($album === null) {
+            Log::error(Database::get(), __METHOD__, __LINE__, 'Could not find specified album');
+            return false;
+        }
 
-		// $albumIDs contains all IDs without the first albumID
-		// Convert to string
-		$filteredIDs = implode(',', $albumIDs);
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-		$query  = Database::prepare(Database::get(), "DELETE FROM ? WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_ALBUMS, $filteredIDs));
-		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        // Check if password is correct
+        if ($album->password == '') {
+            return true;
+        }
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+        if ($album->password === crypt($password, $album->password)) {
+            return true;
+        }
 
-		if ($result===false) return false;
-		return true;
+        return false;
 
-	}
+    }
 
-	/**
-	 * @return boolean Returns true when successful.
-	 */
-	public function delete() {
+    /**
+     * @return boolean Returns true when successful.
+     */
+    public function merge()
+    {
 
-		// Check dependencies
-		Validator::required(isset($this->albumIDs), __METHOD__);
+        // Check dependencies
+        Validator::required(isset($this->albumIDs), __METHOD__);
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 0, func_get_args());
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-		// Init vars
-		$photoIDs = array();
+        // Convert to array
+        $albumIDs = explode(',', $this->albumIDs);
 
-		// Execute query
-		$query  = Database::prepare(Database::get(), "SELECT id FROM ? WHERE album IN (?)", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
-		$photos = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        // Get first albumID
+        $albumID = array_splice($albumIDs, 0, 1);
+        $albumID = $albumID[0];
 
-		if ($photos===false) return false;
+        $query = Database::prepare(Database::get(), "DELETE FROM ? WHERE album_id IN (?)", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $filteredIDs));
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        if ($result === false) {
+            return false;
+        }
 
-		// Only delete photos when albums contain photos
-		if ($photos->num_rows>0) {
+        $query = Database::prepare(Database::get(), "UPDATE ? SET album = ? WHERE album IN (?)", array(PHOTOS_MANAGER_TABLE_PHOTOS, $albumID, $this->albumIDs));
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        if ($result === false) {
+            return false;
+        }
 
-			// Add each id to photoIDs
-			while ($row = $photos->fetch_object()) $photoIDs[] = $row->id;
+        // $albumIDs contains all IDs without the first albumID
+        // Convert to string
+        $filteredIDs = implode(',', $albumIDs);
 
-			// Convert photoIDs to a string
-			$photoIDs = implode(',', $photoIDs);
+        $query = Database::prepare(Database::get(), "DELETE FROM ? WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_ALBUMS, $filteredIDs));
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
-			// Delete all photos
-			$photo = new Photo($photoIDs);
-			if ($photo->delete()!==true) return false;
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-		}
+        if ($result === false) {
+            return false;
+        }
 
-		// Delete albums
-		$query  = Database::prepare(Database::get(), "DELETE FROM ? WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
-		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        return true;
 
-		// Call plugins
-		Plugins::get()->activate(__METHOD__, 1, func_get_args());
+    }
 
-		if ($result===false) return false;
-		return true;
+    /**
+     * @return boolean Returns true when successful.
+     */
+    public function delete()
+    {
 
-	}
+        // Check dependencies
+        Validator::required(isset($this->albumIDs), __METHOD__);
 
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
+
+        // Init vars
+        $photoIDs = array();
+
+        // Execute query
+        $query = Database::prepare(Database::get(), "SELECT id FROM ? WHERE album IN (?)", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
+        $photos = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+
+        if ($photos === false) {
+            return false;
+        }
+
+        // Only delete photos when albums contain photos
+        if ($photos->num_rows > 0) {
+
+            // Add each id to photoIDs
+            while ($row = $photos->fetch_object()) {
+                $photoIDs[] = $row->id;
+            }
+
+            // Convert photoIDs to a string
+            $photoIDs = implode(',', $photoIDs);
+
+            // Delete all photos
+            $photo = new Photo($photoIDs);
+            if ($photo->delete() !== true) {
+                return false;
+            }
+
+        }
+
+        // Delete albums
+        $query = Database::prepare(Database::get(), "DELETE FROM ? WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+
+        // Delete all the images stored on server
+        $folder = PHOTOS_MANAGER_UPLOADS . '/' . $this->albumIDs;
+        self::rrmdir($folder);
+
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
+
+        if ($result === false) {
+            return false;
+        }
+
+        return true;
+
+    }
+
+    public static function rrmdir($dir)
+    {
+        if (is_dir($dir)) {
+            $objects = scandir($dir);
+            foreach ($objects as $object) {
+                if ($object != "." && $object != "..") {
+                    if (is_dir($dir . "/" . $object)) {
+                        self::rrmdir($dir . "/" . $object);
+                    } else {
+                        unlink($dir . "/" . $object);
+                    }
+
+                }
+            }
+            rmdir($dir);
+        }
+    }
 }
-
-?>

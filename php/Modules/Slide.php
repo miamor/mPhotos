@@ -11,11 +11,16 @@ final class Slide {
 	 */
 	public function __construct() {
 
+        $this->PHOTOS_MANAGER_URL_UPLOADS = PHOTOS_MANAGER_URL_UPLOADS;
+        $this->PHOTOS_MANAGER_URL_UPLOADS_BIG = PHOTOS_MANAGER_URL_UPLOADS_BIG;
+        $this->PHOTOS_MANAGER_URL_UPLOADS_THUMB = PHOTOS_MANAGER_URL_UPLOADS_THUMB;
+        $this->PHOTOS_MANAGER_URL_UPLOADS_MEDIUM = PHOTOS_MANAGER_URL_UPLOADS_MEDIUM;
+
 		return true;
 
 	}
 
-    public function add($albumID, $photoID) {
+    public function add($albumID, $photoID, $folderID = null) {
 
         //if ($albumID !== null && $photoID !== null) {
         if ($albumID && $photoID) {
@@ -28,7 +33,7 @@ final class Slide {
 
             //Response::error("INSERT INTO ? (id, album_id, photo_id) VALUES ('?', '?', '?') ~~~~~ ".PHOTOS_MANAGER_TABLE_SLIDESHOW.' ---- '.$id.'~'.$albumID.'~'.$photoID);
             // Database
-            $query  = Database::prepare(Database::get(), "INSERT INTO ? (id, album_id, photo_id) VALUES ('?', '?', '?')", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $id, $albumID, $photoID));
+            $query  = Database::prepare(Database::get(), "INSERT INTO ? (id, album_id, photo_id, folder_id) VALUES ('?', '?', '?', '?')", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $id, $albumID, $photoID, $folderID));
             $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
             /*$values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $id, $info['title'], $photo_name, $info['description'], $info['tags'], $info['type'], $info['width'], $info['height'], $info['size'], $info['iso'], $info['aperture'], $info['make'], $info['model'], $info['shutter'], $info['focal'], $info['takestamp'], $path_thumb, $albumID, $public, $star, $checksum, $medium);
@@ -89,6 +94,7 @@ final class Slide {
             $photo = Photo::prepareData($photo_orig);
             $photo['photo'] = $photo_orig['photo_id'];
             $photo['id'] = $photo_orig['slide_id'];
+            $photo['folder_id'] = $photo_orig['folder_id'];
 
 
 			// Set previous and next photoID for navigation purposes
@@ -214,13 +220,22 @@ final class Slide {
 		$photo['sysdate'] = strftime('%d %b. %Y', substr($photo['id'], 0, -4));
 		if (strlen($photo['takestamp'])>1) $photo['takedate'] = strftime('%d %b. %Y %T', $photo['takestamp']);
 
+
+        if ($photo['album'] != 0) {
+            $this->PHOTOS_MANAGER_URL_UPLOADS = PHOTOS_MANAGER_URL_UPLOADS.'/'.$photo['album'];
+            $this->PHOTOS_MANAGER_URL_UPLOADS_THUMB = $this->PHOTOS_MANAGER_URL_UPLOADS.'/thumb/';
+            $this->PHOTOS_MANAGER_URL_UPLOADS_MEDIUM = $this->PHOTOS_MANAGER_URL_UPLOADS.'/medium/';
+            $this->PHOTOS_MANAGER_URL_UPLOADS_BIG = $this->PHOTOS_MANAGER_URL_UPLOADS.'/big/';
+        }
+
+
 		// Parse medium
-		if ($photo['medium']==='1') $photo['medium'] = PHOTOS_MANAGER_URL_UPLOADS_MEDIUM . $photo['url'];
+		if ($photo['medium']==='1') $photo['medium'] = $this->PHOTOS_MANAGER_URL_UPLOADS_MEDIUM . $photo['url'];
 		else                        $photo['medium'] = '';
 
 		// Parse paths
-		$photo['url']      = PHOTOS_MANAGER_URL_UPLOADS_BIG . $photo['url'];
-		$photo['thumbUrl'] = PHOTOS_MANAGER_URL_UPLOADS_THUMB . $photo['thumbUrl'];
+		$photo['url']      = $this->PHOTOS_MANAGER_URL_UPLOADS_BIG . $photo['url'];
+		$photo['thumbUrl'] = $this->PHOTOS_MANAGER_URL_UPLOADS_THUMB . $photo['thumbUrl'];
 
         // Reset slide id
         $photo['id'] = $photo['slide_id'];

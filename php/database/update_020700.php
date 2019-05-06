@@ -21,10 +21,10 @@ if ($result===false) {
 }
 
 // Create medium folder
-if (is_dir(PHOTOS_MANAGER_UPLOADS_MEDIUM)===false) {
+if (is_dir($PHOTOS_MANAGER_UPLOADS_MEDIUM)===false) {
 
 	// Only create the folder when it is missing
-	if (@mkdir(PHOTOS_MANAGER_UPLOADS_MEDIUM)===false) {
+	if (@mkdir($PHOTOS_MANAGER_UPLOADS_MEDIUM)===false) {
 		Log::error($connection, 'update_020700', __LINE__, 'Could not create medium-folder');
 		Response::error('Could not create medium-folder!');
 	}
