@@ -258,8 +258,10 @@ final class Photo {
 
 		}
 
-		$values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $id, $info['title'], $_SESSION['identifier'], $photo_name, $info['description'], $info['tags'], $info['type'], $info['width'], $info['height'], $info['size'], $info['iso'], $info['aperture'], $info['make'], $info['model'], $info['shutter'], $info['focal'], $info['takestamp'], $path_thumb, $albumID, $public, $star, $checksum, $medium);
-		$query  = Database::prepare(Database::get(), "INSERT INTO ? (id, title, user_identifier, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum, medium) VALUES ('?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?')", $values);
+		// $values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $id, $info['title'], $_SESSION['identifier'], $photo_name, $info['description'], $info['tags'], $info['type'], $info['width'], $info['height'], $info['size'], $info['iso'], $info['aperture'], $info['make'], $info['model'], $info['shutter'], $info['focal'], $info['takestamp'], $path_thumb, $albumID, $public, $star, $checksum, $medium);
+		// $query  = Database::prepare(Database::get(), "INSERT INTO ? (id, title, user_identifier, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum, medium) VALUES ('?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?')", $values);
+		$values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $info['title'], $_SESSION['identifier'], $photo_name, $info['description'], $info['tags'], $info['type'], $info['width'], $info['height'], $info['size'], $info['iso'], $info['aperture'], $info['make'], $info['model'], $info['shutter'], $info['focal'], $info['takestamp'], $path_thumb, $albumID, $public, $star, $checksum, $medium);
+		$query  = Database::prepare(Database::get(), "INSERT INTO ? (title, user_identifier, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum, medium) VALUES ('?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?')", $values);
 		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
 		if ($result===false) {
@@ -292,7 +294,7 @@ final class Photo {
 			$result = $result->fetch_object();
 
             if ($result->album != 0) {
-                $this->PHOTOS_MANAGER_UPLOADS = PHOTOS_MANAGER_UPLOADS.'/'.$albumID;
+                $this->PHOTOS_MANAGER_UPLOADS = PHOTOS_MANAGER_UPLOADS.'/'.$result->album;
                 $this->PHOTOS_MANAGER_UPLOADS_BIG = $this->PHOTOS_MANAGER_UPLOADS.'/big/';
             }
     
@@ -1269,9 +1271,12 @@ final class Photo {
 			$id = generateID();
 
 			// Duplicate entry
-			$values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $id, PHOTOS_MANAGER_TABLE_PHOTOS, $photo->id);
-			$query  = Database::prepare(Database::get(), "INSERT INTO ? (id, title, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum) SELECT '?' AS id, title, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum FROM ? WHERE id = '?'", $values);
-			$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+			// $values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $id, PHOTOS_MANAGER_TABLE_PHOTOS, $photo->id);
+			// $query  = Database::prepare(Database::get(), "INSERT INTO ? (id, title, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum) SELECT '?' AS id, title, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum FROM ? WHERE id = '?'", $values);
+			$values = array(PHOTOS_MANAGER_TABLE_PHOTOS, PHOTOS_MANAGER_TABLE_PHOTOS, $photo->id);
+			$query  = Database::prepare(Database::get(), "INSERT INTO ? (title, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum) SELECT title, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum FROM ? WHERE id = '?'", $values);
+
+            $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
 			if ($result===false) $error = true;
 

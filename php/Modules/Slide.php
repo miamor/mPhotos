@@ -33,7 +33,8 @@ final class Slide {
 
             //Response::error("INSERT INTO ? (id, album_id, photo_id) VALUES ('?', '?', '?') ~~~~~ ".PHOTOS_MANAGER_TABLE_SLIDESHOW.' ---- '.$id.'~'.$albumID.'~'.$photoID);
             // Database
-            $query  = Database::prepare(Database::get(), "INSERT INTO ? (id, album_id, photo_id, folder_id) VALUES ('?', '?', '?', '?')", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $id, $albumID, $photoID, $folderID));
+            // $query  = Database::prepare(Database::get(), "INSERT INTO ? (id, album_id, photo_id, folder_id) VALUES ('?', '?', '?', '?')", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $id, $albumID, $photoID, $folderID));
+            $query  = Database::prepare(Database::get(), "INSERT INTO ? (album_id, photo_id, folder_id) VALUES ('?', '?', '?')", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $albumID, $photoID, $folderID));
             $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
             /*$values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $id, $info['title'], $photo_name, $info['description'], $info['tags'], $info['type'], $info['width'], $info['height'], $info['size'], $info['iso'], $info['aperture'], $info['make'], $info['model'], $info['shutter'], $info['focal'], $info['takestamp'], $path_thumb, $albumID, $public, $star, $checksum, $medium);

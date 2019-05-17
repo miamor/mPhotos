@@ -61,6 +61,8 @@ final class Admin extends Access
                 break;
             case 'Album::getFolders':self::getFoldersAction();
                 break;
+            case 'Album::import':self::importAlbumAction();
+                break;
 
             // Photo functions
             case 'Photo::get':self::getPhotoAction();
@@ -342,6 +344,17 @@ final class Admin extends Access
         Response::json($album->getFolders());
 
     }
+
+    private static function importAlbumAction() {
+
+        Validator::required(isset($_FILES), __METHOD__);
+
+        $album = new Album(null);
+        Response::json($album->import($_FILES), JSON_NUMERIC_CHECK);
+
+    }
+
+
 
     // Photo functions
 

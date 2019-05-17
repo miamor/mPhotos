@@ -4,6 +4,8 @@ namespace PhotosManager\Modules;
 
 final class Import {
 
+    
+
 	/**
 	 * Creates an array similar to a file upload array and adds the photo to PhotosManager.
 	 * @return boolean Returns true when photo import was successful.

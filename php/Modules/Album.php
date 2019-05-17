@@ -3,11 +3,18 @@
 namespace PhotosManager\Modules;
 
 use ZipArchive;
+use \RecursiveDirectoryIterator;
+use \RecursiveIteratorIterator;
 
 final class Album
 {
 
     private $albumIDs = null;
+
+    public static $validExtensions = array(
+        '.zip',
+        '.rar',
+    );
 
     /**
      * @return boolean Returns true when successful.
@@ -25,7 +32,7 @@ final class Album
     /**
      * @return string|false ID of the created album.
      */
-    public function addFolder($title = 'Untitled', $parent_folder = null)
+    public function addFolder($title = 'Untitled', $parent_folder = null, $return_folder_id = false, $import_id = null)
     {
 
         // Call plugins
@@ -36,7 +43,14 @@ final class Album
         $sysstamp = time();
 
         // Database
-        $query = Database::prepare(Database::get(), "INSERT INTO ? (id, title, album_id, parent_folder) VALUES ('?', '?', '?', '?')", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $id, $title, $this->albumIDs, $parent_folder));
+        // $query = Database::prepare(Database::get(), "INSERT INTO ? (id, title, album_id, parent_folder, import_id) VALUES ('?', '?', '?', '?', '?')", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $id, $title, $this->albumIDs, $parent_folder, $import_id));
+
+        $query = Database::prepare(Database::get(), "INSERT INTO ? (title, album_id, parent_folder, import_id) VALUES ('?', '?', '?', '?')", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $title, $this->albumIDs, $parent_folder, $import_id));
+
+        if ($parent_folder === null) {
+            $query = Database::prepare(Database::get(), "INSERT INTO ? (title, album_id, import_id) VALUES ('?', '?', '?')", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $title, $this->albumIDs, $import_id));
+        }
+
         $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
         // Call plugins
@@ -48,7 +62,12 @@ final class Album
             return false;
         }
 
-        return Slide::getSlides($this->albumIDs);
+        if ($return_folder_id) {
+            return $id;
+        }
+
+        // return Slide::getSlides($this->albumIDs);
+        return array('folders' => $this->getFolders(), 'slides' => Slide::getSlides($this->albumIDs));
 
     }
 
@@ -119,23 +138,326 @@ final class Album
         return $result;
     }
 
+    public function import(array $files, $returnOnError = false)
+    {
+
+        // Only process the first file in the array
+        $file = $files[0];
+
+        // Check if file exceeds the upload_max_filesize directive
+        if ($file['error'] === UPLOAD_ERR_INI_SIZE) {
+            Log::error(Database::get(), __METHOD__, __LINE__, 'The uploaded file exceeds the upload_max_filesize directive in php.ini');
+            if ($returnOnError === true) {
+                return false;
+            }
+
+            Response::error('The uploaded file exceeds the upload_max_filesize directive in php.ini!');
+        }
+
+        // Check if file was only partially uploaded
+        if ($file['error'] === UPLOAD_ERR_PARTIAL) {
+            Log::error(Database::get(), __METHOD__, __LINE__, 'The uploaded file was only partially uploaded');
+            if ($returnOnError === true) {
+                return false;
+            }
+
+            Response::error('The uploaded file was only partially uploaded!');
+        }
+
+        // Check if writing file to disk failed
+        if ($file['error'] === UPLOAD_ERR_CANT_WRITE) {
+            Log::error(Database::get(), __METHOD__, __LINE__, 'Failed to write photo to disk');
+            if ($returnOnError === true) {
+                return false;
+            }
+
+            Response::error('Failed to write photo to disk!');
+        }
+
+        // Check if a extension stopped the file upload
+        if ($file['error'] === UPLOAD_ERR_EXTENSION) {
+            Log::error(Database::get(), __METHOD__, __LINE__, 'A PHP extension stopped the file upload');
+            if ($returnOnError === true) {
+                return false;
+            }
+
+            Response::error('A PHP extension stopped the file upload!');
+        }
+
+        // Check if the upload was successful
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            Log::error(Database::get(), __METHOD__, __LINE__, 'Upload contains an error (' . $file['error'] . ')');
+            if ($returnOnError === true) {
+                return false;
+            }
+
+            Response::error('Upload failed!');
+        }
+
+        // Verify extension
+        $extension = getExtension($file['name'], false);
+        if (!in_array(strtolower($extension), self::$validExtensions, true)) {
+            Log::error(Database::get(), __METHOD__, __LINE__, 'File format not supported');
+            if ($returnOnError === true) {
+                return false;
+            }
+
+            Response::error('File format not supported!');
+        }
+
+        // Verify rar or zip
+        /*$type = @exif_imagetype($file['tmp_name']);
+        if (!in_array($type, self::$validTypes, true)) {
+        Log::error(Database::get(), __METHOD__, __LINE__, 'Photo type not supported');
+        if ($returnOnError===true) return false;
+        Response::error('Photo type not supported!');
+        }*/
+
+        // Generate id
+        $album_id = generateID();
+
+        // Set paths
+        $tmp_name = $file['tmp_name'];
+        $upload_name = $album_id . $extension;
+        $zip_path = PHOTOS_MANAGER_UPLOADS . $upload_name;
+
+        // Import if not uploaded via web
+        if (!is_uploaded_file($tmp_name)) {
+            if (!@copy($tmp_name, $zip_path)) {
+                Log::error(Database::get(), __METHOD__, __LINE__, 'Could not copy file to uploads');
+                if ($returnOnError === true) {
+                    return false;
+                }
+
+                Response::error('Could not copy file to uploads!');
+            } else {
+                @unlink($tmp_name);
+            }
+
+        } else {
+            if (!@move_uploaded_file($tmp_name, $zip_path)) {
+                Log::error(Database::get(), __METHOD__, __LINE__, 'Could not move file to uploads');
+                if ($returnOnError === true) {
+                    return false;
+                }
+
+                Response::error('Could not move file to uploads!');
+            }
+        }
+
+        $album_path = PHOTOS_MANAGER_UPLOADS . $album_id . '/';
+        $zip = new ZipArchive;
+        $res = $zip->open($zip_path);
+        if ($res === true) {
+            $zip->extractTo($album_path);
+            $zip->close();
+
+            // read data.json file
+            $data = json_decode(file_get_contents($album_path . 'data.json'), true);
+
+            $album_info = $data['album'];
+            // add to database
+            /*$values = array(PHOTOS_MANAGER_TABLE_ALBUMS, $album_id, $album_info['title'], $_SESSION['identifier'], $album_info['description'], $album_info['path'], $album_info['sysstamp'], $album_info['public'], $album_info['visible'], $album_info['downloadable'], $album_info['password'], $album_info['import_id']);
+            $query = Database::prepare(Database::get(), "INSERT INTO ? (id, title, user_identifier, description, path, sysstamp, public, visible, downloadable, password, import_id) VALUES ('?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?')", $values);
+            $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);*/
+
+            $album_id = $this->add($album_info['title'], $album_info['description'], $album_id, $album_info['public'], $album_info['visible'], $album_info['downloadable'], $album_info['password']);
+            if ($album_id === false) {
+                if ($returnOnError === true) {
+                    return false;
+                }
+                Response::error('Could not save album to database!');
+            }
+            // set album id
+            $this->albumIDs = $album_id;
+
+            // insert photos
+            foreach ($data['photos'] as $k => $info) {
+                // $photo_id = generateID();
+                // add to database
+                // $values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $photo_id, $info['title'], $_SESSION['identifier'], $info['url'], $info['id']);
+                // $query = Database::prepare(Database::get(), "INSERT INTO ? (id, title, user_identifier, url, import_id) VALUES ('?', '?', '?', '?', '?')", $values);
+
+                // $values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $info['title'], $_SESSION['identifier'], $info['url'], $info['id']);
+                // $query = Database::prepare(Database::get(), "INSERT INTO ? (title, user_identifier, url, import_id) VALUES ('?', '?', '?', '?')", $values);
+
+                $values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $info['title'], $_SESSION['identifier'], $info['url'], $info['description'], $info['tags'], $info['type'], $info['width'], $info['height'], $info['size'], $info['iso'], $info['aperture'], $info['make'], $info['model'], $info['shutter'], $info['focal'], $info['takestamp'], $info['thumbUrl'], $album_id, $info['public'], $info['star'], $info['checksum'], $info['medium'], $info['id']);
+                $query = Database::prepare(Database::get(), "INSERT INTO ? (title, user_identifier, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum, medium, import_id) VALUES ('?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?')", $values);
+
+                $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+
+                if ($result === false) {
+                    // when there's error, delete this album
+                    $this->delete();
+                    // delete zip file
+                    unlink($zip_path);
+
+                    if ($returnOnError === true) {
+                        return false;
+                    }
+
+                    Response::error('Could not save photo ' . $photo_id . ' - ' . $info['url'] . ' (' . $info['id'] . ') to database!');
+                }
+            }
+
+            // insert folders
+            $data_folder = $data['folders'];
+            // foreach ($data_folder as $k => $info) {
+            $index = 0;
+            // $inserted = array();
+            // echo json_encode($data_folder);
+            // while (count($data_folder) > 0) {
+            foreach ($data_folder as $index => $info) {
+                // $info = $data_folder[$index];
+                // echo $index.'~'.json_encode($info).'<br/>';
+
+                // add parent folders first
+                if (!$info['parent_folder']) {
+                    // add to database
+                    $folder_id = $this->addFolder($info['title'], $info['parent_folder'], true, $info['id']);
+
+                    if ($folder_id === false) {
+                        // when there's error, delete this album
+                        $this->delete();
+                        // delete zip file
+                        unlink($zip_path);
+
+                        if ($returnOnError === true) {
+                            return false;
+                        }
+                        Response::error('Could not save folder to database!');
+                    }
+
+                    // remove this one from folders array
+                    unset($data_folder[$index]);
+                    // reset index to loop from start again
+                    $index = 0;
+                } else {
+                    // find parent folder
+                    $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE import_id = ? AND album_id = ? LIMIT 1", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $info['parent_folder'], $album_id));
+                    $folders = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+
+                    $parent_folder = $folders->fetch_assoc();
+
+                    if ($parent_folder === false) {
+                        // the parent folder of this is not added yet
+                        // then skip it for now
+                        $index++;
+                    } else {
+
+                        // if parent folder of this one exists, then add this folder
+                        $folder_id = $this->addFolder($info['title'], $parent_folder['id'], true, $info['id']);
+
+                        if ($folder_id === false) {
+                            // when there's error, delete this album
+                            $this->delete();
+                            // delete zip file
+                            unlink($zip_path);
+
+                            if ($returnOnError === true) {
+                                return false;
+                            }
+
+                            Response::error('Could not save folder to database!');
+                        }
+
+                        // remove this one from folders array
+                        unset($data_folder[$index]);
+                        // reset k to loop over again
+                        $index = 0;
+
+                    }
+
+                }
+            }
+
+            // insert slides
+            foreach ($data['slides'] as $k => $info) {
+                // get photo id
+                $query = Database::prepare(Database::get(), "SELECT id FROM ? WHERE import_id = ? AND album = ? LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $info['photo_id'], $album_id));
+                $photos = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+                if ($photos === false) {
+                    // when there's error, delete this album
+                    $this->delete();
+                    // delete zip file
+                    unlink($zip_path);
+
+                    if ($returnOnError === true) {
+                        return false;
+                    }
+
+                    Response::error('Could not get photo id of the slide ' . $info['id'] . ' (photo_id = import_id = ' . $info['photo_id'] . ')!');
+                }
+                $photo = $photos->fetch_assoc();
+
+                // get folder id
+                $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE import_id = ? AND album_id = ? LIMIT 1", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $info['folder_id'], $album_id));
+                $folders = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+
+                $slide_id = false;
+
+                if ($folders === false || $folders->num_rows <= 0) {
+                    $slide_id = Slide::add($album_id, $photo['id']);
+                } else {
+                    $folder = $folders->fetch_assoc();
+
+                    $slide_id = Slide::add($album_id, $photo['id'], $folder['id']);
+                }
+
+                if ($slide_id === false) {
+                    // when there's error, delete this album
+                    $this->delete();
+                    // delete zip file
+                    unlink($zip_path);
+
+                    if ($returnOnError === true) {
+                        return false;
+                    }
+
+                    Response::error('Could not save slide to database!');
+                }
+            }
+
+            // Call plugins
+            Plugins::get()->activate(__METHOD__, 1, func_get_args());
+
+        } else {
+            // error open zip file
+            Response::error('Could not read archive file!');
+        }
+
+        // delete zip file
+        unlink($zip_path);
+        return $album_id;
+
+    }
+
     /**
      * @return string|false ID of the created album.
      */
-    public function add($title = 'Untitled')
+    public function add($title = 'Untitled', $description = '', $id = null, $public = null, $visible = null, $downloadable = 0, $password = null)
     {
 
         // Call plugins
         Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
         // Properties
-        $id = generateID();
+        if ($id === null) {
+            $id = generateID();
+        }
+
         $sysstamp = time();
-        $public = 0;
-        $visible = 1;
+        if ($public === null) {
+            $public = 0;
+        }
+
+        if ($visible === null) {
+            $visible = 1;
+        }
 
         // Database
-        $query = Database::prepare(Database::get(), "INSERT INTO ? (id, user_identifier, title, sysstamp, public, visible) VALUES ('?', '?', '?', '?', '?', '?')", array(PHOTOS_MANAGER_TABLE_ALBUMS, $id, $_SESSION['identifier'], $title, $sysstamp, $public, $visible));
+        $query = Database::prepare(Database::get(), "INSERT INTO ? (id, user_identifier, title, description, sysstamp, public, visible, downloadable, password) VALUES ('?', '?', '?', '?', '?', '?', '?', '?', '?')", array(PHOTOS_MANAGER_TABLE_ALBUMS, $id, $_SESSION['identifier'], $title, $description, $sysstamp, $public, $visible, $downloadable, $password));
+        // $query = Database::prepare(Database::get(), "INSERT INTO ? (user_identifier, title, description, sysstamp, public, visible, downloadable, password) VALUES ('?', '?', '?', '?', '?', '?', '?', '?')", array(PHOTOS_MANAGER_TABLE_ALBUMS, $_SESSION['identifier'], $title, $description, $sysstamp, $public, $visible, $downloadable, $password));
         $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
         // Call plugins
@@ -336,29 +658,32 @@ final class Album
             array("<", ">", ":", '"', "/", "\\", "|", "?", "*")
         );
 
+        // data to save to export
+        $export_data = array();
+
         // Photos query
         switch ($this->albumIDs) {
             case 's':
-                $photos = Database::prepare(Database::get(), 'SELECT title, url FROM ? WHERE public = 1', array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $photos = Database::prepare(Database::get(), 'SELECT * FROM ? WHERE public = 1', array(PHOTOS_MANAGER_TABLE_PHOTOS));
                 $zipTitle = 'Public';
                 break;
             case 'f':
-                $photos = Database::prepare(Database::get(), 'SELECT title, url FROM ? WHERE star = 1', array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $photos = Database::prepare(Database::get(), 'SELECT * FROM ? WHERE star = 1', array(PHOTOS_MANAGER_TABLE_PHOTOS));
                 $zipTitle = 'Starred';
                 break;
             case 'r':
-                $photos = Database::prepare(Database::get(), 'SELECT title, url FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) GROUP BY checksum', array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $photos = Database::prepare(Database::get(), 'SELECT * FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) GROUP BY checksum', array(PHOTOS_MANAGER_TABLE_PHOTOS));
                 $zipTitle = 'Recent';
                 break;
             default:
-                $photos = Database::prepare(Database::get(), "SELECT title, url FROM ? WHERE album = '?'", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
+                $photos = Database::prepare(Database::get(), "SELECT * FROM ? WHERE album = '?'", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
                 $zipTitle = 'Unsorted';
         }
 
         // Get title from database when album is not a SmartAlbum
         if ($this->albumIDs != 0 && is_numeric($this->albumIDs)) {
 
-            $query = Database::prepare(Database::get(), "SELECT title FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
+            $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
             $album = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
             if ($album === false) {
@@ -373,6 +698,9 @@ final class Album
                 Log::error(Database::get(), __METHOD__, __LINE__, 'Could not find specified album');
                 return false;
             }
+
+            // save to export data
+            $export_data['album'] = json_decode(json_encode($album), true);
 
             // Set title
             $zipTitle = $album->title;
@@ -401,56 +729,125 @@ final class Album
         }
 
         // Parse each path
-        $files = array();
+        /*$files = array();
         while ($photo = $photos->fetch_object()) {
 
-            $PHOTOS_MANAGER_URL_UPLOADS_BIG = PHOTOS_MANAGER_URL_UPLOADS_BIG;
-            if ($photo['album'] != 0) {
-                $PHOTOS_MANAGER_URL_UPLOADS_BIG = PHOTOS_MANAGER_URL_UPLOADS . $photo->album . '/big/';
-            }
+        $PHOTOS_MANAGER_UPLOADS_BIG = PHOTOS_MANAGER_UPLOADS_BIG;
+        // var_dump($photo);
+        if ($photo->album != 0) {
+        $PHOTOS_MANAGER_UPLOADS_BIG = PHOTOS_MANAGER_UPLOADS . $photo->album . '/big/';
+        }
 
-            // Parse url
-            $photo->url = $PHOTOS_MANAGER_URL_UPLOADS_BIG . $photo->url;
+        // Parse url
+        $photo->url = $PHOTOS_MANAGER_UPLOADS_BIG . $photo->url;
 
-            // Parse title
-            $photo->title = str_replace($badChars, '', $photo->title);
-            if (!isset($photo->title) || $photo->title === '') {
-                $photo->title = 'Untitled';
-            }
+        // Parse title
+        $photo->title = str_replace($badChars, '', $photo->title);
+        if (!isset($photo->title) || $photo->title === '') {
+        $photo->title = 'Untitled';
+        }
 
-            // Check if readable
-            if (!@is_readable($photo->url)) {
-                continue;
-            }
+        // Check if readable
+        if (!@is_readable($photo->url)) {
+        continue;
+        }
 
-            // Get extension of image
-            $extension = getExtension($photo->url, false);
+        // save to export data
+        $export_data[] = json_decode(json_encode($photo), true);
 
-            // Set title for photo
-            $zipFileName = $zipTitle . '/' . $photo->title . $extension;
+        // Get extension of image
+        $extension = getExtension($photo->url, false);
 
-            // Check for duplicates
-            if (!empty($files)) {
-                $i = 1;
-                while (in_array($zipFileName, $files)) {
+        // Set title for photo
+        $zipFileName = $zipTitle . '/' . $photo->title . $extension;
+        // echo $zipFileName;
 
-                    // Set new title for photo
-                    $zipFileName = $zipTitle . '/' . $photo->title . '-' . $i . $extension;
+        // Check for duplicates
+        if (!empty($files)) {
+        $i = 1;
+        while (in_array($zipFileName, $files)) {
 
-                    $i++;
+        // Set new title for photo
+        $zipFileName = $zipTitle . '/' . $photo->title . '-' . $i . $extension;
 
-                }
-            }
+        $i++;
 
-            // Add to array
-            $files[] = $zipFileName;
+        }
+        }
 
-            // Add photo to zip
-            $zip->addFile($photo->url, $zipFileName);
+        // Add to array
+        $files[] = $zipFileName;
+
+        // Add photo to zip
+        $zip->addFile($photo->url, $zipFileName);
 
         }
 
+        $export_data_json = json_encode($export_data);
+        echo $export_data_json;
+
         // Finish zip
+        $zip->close();*/
+
+        // zip whole folder
+        // Get real path for our folder
+        while ($photo = $photos->fetch_object()) {
+            // save to export data
+            $export_data['photos'][] = json_decode(json_encode($photo), true);
+
+            $PHOTOS_MANAGER_UPLOADS = PHOTOS_MANAGER_UPLOADS;
+            // var_dump($photo);
+            if ($photo->album != 0) {
+                $PHOTOS_MANAGER_UPLOADS = PHOTOS_MANAGER_UPLOADS . $photo->album . '/';
+            }
+        }
+
+        $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE album_id = '?'", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $this->albumIDs));
+        $slides = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        if ($slides->num_rows > 0) {
+            while ($slide = $slides->fetch_object()) {
+                // save to export data
+                $export_data['slides'][] = json_decode(json_encode($slide), true);
+            }
+        }
+
+        $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE album_id = '?'", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $this->albumIDs));
+        $folders = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        if ($folders->num_rows > 0) {
+            while ($folder = $folders->fetch_object()) {
+                // save to export data
+                $export_data['folders'][] = json_decode(json_encode($folder), true);
+            }
+        }
+
+        $rootPath = realpath($PHOTOS_MANAGER_UPLOADS);
+
+        // Create recursive directory iterator
+        /** @var SplFileInfo[] $files */
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($rootPath),
+            RecursiveIteratorIterator::LEAVES_ONLY
+        );
+
+        foreach ($files as $name => $file) {
+            // Skip directories (they would be added automatically)
+            if (!$file->isDir()) {
+                // Get real and relative path for current file
+                $filePath = $file->getRealPath();
+                $relativePath = substr($filePath, strlen($rootPath) + 1);
+
+                // Add current file to archive
+                $zip->addFile($filePath, $relativePath);
+            }
+        }
+
+        $export_data_json = json_encode($export_data);
+        // echo $export_data_json;
+        // $export_data_json = 'hiu';
+
+        $zip->addFromString('data.json', $export_data_json);
+
+        // Zip archive will be created only after closing object
         $zip->close();
 
         // Send zip
@@ -913,6 +1310,20 @@ final class Album
                 return false;
             }
 
+        }
+
+        // Delete slides
+        $query = Database::prepare(Database::get(), "DELETE FROM ? WHERE album_id IN (?)", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $this->albumIDs));
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        if ($result === false) {
+            return false;
+        }
+
+        // Delete folders
+        $query = Database::prepare(Database::get(), "DELETE FROM ? WHERE album_id IN (?)", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $this->albumIDs));
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        if ($result === false) {
+            return false;
         }
 
         // Delete albums

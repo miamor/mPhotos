@@ -237,7 +237,7 @@ final class Albums
                 if ($row3 && $row3->album != 0) {
                     $PHOTOS_MANAGER_URL_UPLOADS_THUMB = PHOTOS_MANAGER_URL_UPLOADS . '/' . $row3->album . '/thumb/';
                 } else {
-                    $PHOTOS_MANAGER_URL_UPLOADS_THUMB = $this->PHOTOS_MANAGER_URL_UPLOADS_THUMB;
+                    $PHOTOS_MANAGER_URL_UPLOADS_THUMB = PHOTOS_MANAGER_URL_UPLOADS_THUMB;
                 }
 
                 $return['recent']['thumbs'][$i] = $PHOTOS_MANAGER_URL_UPLOADS_THUMB . $row3->thumbUrl;
