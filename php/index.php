@@ -49,7 +49,7 @@ if (!empty($fn)) {
     }
 
     if (isset($_POST['photoIDs']) && Validator::isPhotoIDs($_POST['photoIDs']) === false) {
-        Response::error('Wrong parameter type for photoIDs!');
+        Response::error('Wrong parameter type for photoID!');
     }
 
     if (isset($_POST['albumID']) && Validator::isAlbumID($_POST['albumID']) == false) {
