@@ -33,7 +33,7 @@ final class Validator {
 	public static function isPhotoID($photoID) {
 
         // return (preg_match('/^[0-9]{14}$/', $photoID)===1 ? true : false);
-        return (preg_match('/^[0-9]$/', $photoID)===1 ? true : false);
+        return (preg_match('/^[1-9][0-9]*$/', $photoID)===1 ? true : false);
 
 	}
 
