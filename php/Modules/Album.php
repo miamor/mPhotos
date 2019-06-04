@@ -86,7 +86,7 @@ final class Album
 
         $result = array();
         while ($folder = $folders->fetch_assoc()) {
-            $result[] = $folder;
+            $result[$folder['id']] = $folder;
         }
 
         // Call plugins
@@ -137,6 +137,92 @@ final class Album
 
         return $result;
     }
+
+    public function setFolderTitle($folderID, $title = 'Untitled')
+    {
+
+        // Check dependencies
+        Validator::required(isset($folderID), __METHOD__);
+
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
+
+        // Execute query
+        $query = Database::prepare(Database::get(), "UPDATE ? SET title = '?' WHERE id = ?", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $title, $folderID));
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
+
+        if ($result === false) {
+            return false;
+        }
+
+        return true;
+
+    }
+
+    /**
+     * @return boolean Returns true when successful.
+     */
+    public function deleteFolder($folderIDs)
+    {
+
+        // Check dependencies
+        Validator::required(isset($folderIDs), __METHOD__);
+
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
+
+        // Init vars
+        $slideIDs = array();
+
+        // Execute query
+        $query = Database::prepare(Database::get(), "SELECT id FROM ? WHERE folder_id IN (?)", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $folderIDs));
+        $slides = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+
+        if ($slides === false) {
+            return false;
+        }
+
+        // Only delete slides when folders contain slides
+        if ($slides->num_rows > 0) {
+
+            // Add each id to slideIDs
+            while ($row = $slides->fetch_object()) {
+                $slideIDs[] = $row->id;
+            }
+
+            // Convert slideIDs to a string
+            $slideIDs = implode(',', $slideIDs);
+
+            // Delete all slides
+            $slide = new Slide();
+            if ($slide->delete($slideIDs) !== true) {
+                return false;
+            }
+
+        }
+
+        // Delete folders
+        $query = Database::prepare(Database::get(), "DELETE FROM ? WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $folderIDs));
+        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        if ($result === false) {
+            return false;
+        }
+
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
+
+        if ($result === false) {
+            return false;
+        }
+
+        return true;
+
+    }
+
+
 
     public function import(array $files, $returnOnError = false)
     {
@@ -544,23 +630,23 @@ final class Album
 
             case 'f':
                 $return['public'] = '0';
-                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE star = 1 " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position FROM ? WHERE star = 1 ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS));
                 break;
 
             case 's':
                 $return['public'] = '1';
                 // $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE public = 1 OR album = 0 " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
-                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE public = 1 " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position FROM ? WHERE public = 1 ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS));
                 break;
 
             case 'r':
                 $return['public'] = '0';
-                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS));
                 break;
 
             case '0':
                 $return['public'] = '0';
-                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE album = 0 " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position FROM ? WHERE album = 0 ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS));
                 break;
 
             default:
@@ -568,7 +654,7 @@ final class Album
                 $albums = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
                 $return = $albums->fetch_assoc();
                 $return = Album::prepareData($return);
-                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE album = '?' ORDER BY position ASC, id DESC", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position FROM ? WHERE album = '?' ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
                 break;
 
         }
@@ -592,13 +678,16 @@ final class Album
 
             // Set current photoID as nextPhoto of previous photo
             if ($previousPhotoID !== '') {
-                $return['content'][$previousPhotoID]['nextPhoto'] = $photo['id'];
+                $return['content']['p'.$previousPhotoID]['nextPhoto'] = $photo['id'];
+                // $return['content'][$previousPhotoID]['nextPhoto'] = $photo['position'];
             }
 
             $previousPhotoID = $photo['id'];
+            // $previousPhotoID = $photo['position'];
 
             // Add to return
-            $return['content'][$photo['id']] = $photo;
+            $return['content']['p'.$photo['id']] = $photo;
+            // $return['content'][$photo['position']] = $photo;
 
         }
 
@@ -616,9 +705,18 @@ final class Album
             $firstElementId = $firstElement['id'];
 
             if ($lastElementId !== $firstElementId) {
+                $return['content']['p'.$lastElementId]['nextPhoto'] = $firstElementId;
+                $return['content']['p'.$firstElementId]['previousPhoto'] = $lastElementId;
+            }
+            /*$lastElement = end($return['content']);
+            $lastElementId = $lastElement['position'];
+            $firstElement = reset($return['content']);
+            $firstElementId = $firstElement['position'];
+
+            if ($lastElementId !== $firstElementId) {
                 $return['content'][$lastElementId]['nextPhoto'] = $firstElementId;
                 $return['content'][$firstElementId]['previousPhoto'] = $lastElementId;
-            }
+            }*/
 
         }
 
@@ -638,6 +736,7 @@ final class Album
         return $return;
 
     }
+
 
     /**
      * Starts a download of an album.
@@ -921,6 +1020,8 @@ final class Album
 
         $query = Database::prepare(Database::get(), "UPDATE ? SET position = CASE id ? END WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_PHOTOS, $whens, $id_list));
         $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+
+        // Response::json("UPDATE ? SET position = CASE id $whens END WHERE id IN ($id_list)");
 
         // Call plugins
         Plugins::get()->activate(__METHOD__, 1, func_get_args());

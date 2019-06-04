@@ -10446,7 +10446,144 @@ folder = {
                 }
             }
         })
+    },
+
+    folder.setTitle = function (folderID) {
+
+        let oldTitle = ''
+        let msg = ''
+
+        if (!folderID) return false
+        // if (folderID instanceof Array === false) folderID = [folderID]
+
+        console.log(folderID)
+
+        if (folder.json) oldTitle = folder.json.title
+        else if (album.json) oldTitle = album.json_folders[folderID].title
+
+        const action = function (data) {
+
+            basicModal.close()
+
+            let newTitle = data.title
+
+            album.json_folders[folderID].title = newTitle
+
+            let params = {
+                albumID: album.getID(),
+                folderID: folderID,
+                title: newTitle
+            }
+
+            api.post('Album::setFolderTitle', params, function (data) {
+
+                if (data !== true) web.error(null, params, data)
+                else $('.folder[data-id="'+folderID+'"] .folder_title > span').text(newTitle)
+
+            })
+
+        }
+
+        let input = web.html `<input class='text' name='title' type='text' maxlength='50' placeholder='Title' value='$${ oldTitle }'>`
+
+        msg = web.html `<p>Enter a new title for this photo: ${ input }</p>`
+
+        basicModal.show({
+            body: msg,
+            buttons: {
+                action: {
+                    title: 'Set title',
+                    fn: action
+                },
+                cancel: {
+                    title: 'Cancel',
+                    fn: basicModal.close
+                }
+            }
+        })
+
+    },
+
+    folder.delete = function (folderIDs) {
+
+        let action = {}
+        let cancel = {}
+        let msg = ''
+
+        let folderTitle = ''
+
+        if (!folderIDs) return false
+        if (folderIDs instanceof Array === false) {
+            // Get title
+            if (folder.json) folderTitle = folder.json.title
+            else if (album.json) folderTitle = album.json_folders[folderIDs].title
+
+            folderIDs = [folderIDs]
+        }
+
+        folderIDs.forEach(function (id) {
+            // get child folders
+            $('.folder[data-id="'+id+'"] > .folder').each(function() {
+                child_id = $(this).attr('data-id')
+                folderIDs.push(child_id)
+            })
+        })
+
+
+        action.fn = function () {
+
+            basicModal.close()
+
+            let params = {
+                albumID: album.getID(),
+                folderIDs: folderIDs.join()
+            }
+
+            api.post('Album::deleteFolder', params, function (data) {
+
+                if (data !== true) web.error(null, params, data)
+                else {
+
+                    folderIDs.forEach(function (id, index, array) {
+                        // Change reference for the next and previous photo
+                        delete album.json_folders[id]
+
+                        if ($('.folder[data-id="'+id+'"]').length) $('.folder[data-id="'+id+'"]').remove()
+                    })
+
+                }
+
+            })
+
+        }
+
+        action.title = 'Delete Folders and Slides'
+        cancel.title = 'Keep Folder'
+
+        // Fallback for album without a title
+        // if (folderTitle === '') folderTitle = ''
+
+        msg = web.html `<p>Are you sure you want to delete the folder '$${ folderTitle }' and all of its contents? This action can't be undone!</p>`
+
+
+        basicModal.show({
+            body: msg,
+            buttons: {
+                action: {
+                    title: action.title,
+                    fn: action.fn,
+                    class: 'red'
+                },
+                cancel: {
+                    title: cancel.title,
+                    fn: basicModal.close
+                }
+            }
+        })
+
     }
+
+
 
 
 /**
@@ -10532,6 +10669,8 @@ album = {
                     photoOrder: photoOrder
                 }
                 api.post('Album::setPosition', params, function (data) {
+                    console.log(params)
+                    console.log(data)
                     if (data !== true) web.error(null, params, data)
                 })
             }
@@ -10613,6 +10752,9 @@ album = {
                 view.album.slides.init()
                 view.album.init()
             }
+
+            console.log('photosData')
+            console.log(album.json)
 
             console.log('slides loaded. album.json_slides:')
             console.log(album.json_slides)
@@ -11461,7 +11603,7 @@ album = {
                             <svg class="iconic"><use xlink:href="#plus"></use></svg>
                         </a>
                     </div>
-                    <h1 class='folder_title' title='$${ data.title }'><i class='fa fa-chevron-right'></i> $${ data.title }</h1>
+                    <h1 class='folder_title' title='$${ data.title }'><i class='fa fa-chevron-right'></i> <span>$${ data.title }</span></h1>
                 </div>
             </div>
             `
@@ -11911,6 +12053,30 @@ album = {
         })
 
     },
+
+
+    contextMenu.folder = function (folderID, e) {
+
+        // Notice for 'Move':
+        // fn must call basicContext.close() first,
+        // in order to keep the selection
+
+        let items = [{
+                title: build.iconic('pencil') + 'Rename',
+                fn: () => folder.setTitle(folderID)
+            },
+            {
+                title: build.iconic('trash') + 'Delete',
+                fn: () => folder.delete(folderID)
+            }
+        ]
+
+        $('.folder[data-id="' + folderID + '"]').addClass('active')
+
+        basicContext.show(items, e.originalEvent, contextMenu.close)
+
+    },
+
 
     contextMenu.slide = function (slideID, e) {
         let items = [{
@@ -13483,12 +13649,12 @@ album = {
 
         if (album.json_slides &&
             album.json_slides.content &&
-            album.json_slides.content[slideID] &&
-            album.json_slides.content[slideID].nextPhoto != '') {
+            album.json_slides.content['s'+slideID] &&
+            album.json_slides.content['s'+slideID].nextPhoto != '') {
 
-            let nextPhoto = album.json_slides.content[slideID].nextPhoto
-            let url = album.json_slides.content[nextPhoto].url
-            let medium = album.json_slides.content[nextPhoto].medium
+            let nextPhoto = album.json_slides.content['s'+slideID].nextPhoto
+            let url = album.json_slides.content['s'+nextPhoto].url
+            let medium = album.json_slides.content['s'+nextPhoto].medium
             let href = (medium != null && medium !== '' ? medium : url)
 
             $('head [data-prefetch]').remove()
@@ -13502,8 +13668,8 @@ album = {
 
         if (slide.getID() !== false &&
             album.json_slides &&
-            album.json_slides.content[slide.getID()] &&
-            album.json_slides.content[slide.getID()].previousPhoto !== '') {
+            album.json_slides.content['s'+slide.getID()] &&
+            album.json_slides.content['s'+slide.getID()].previousPhoto !== '') {
 
             let delay = 0
 
@@ -13523,12 +13689,12 @@ album = {
             setTimeout(() => {
                 if (slide.getID() === false) return false
                 if (visible.presentation()) {
-                    web.goto(album.getID() + '/p/' + album.json_slides.content[slide.getID()].previousPhoto)
+                    web.goto(album.getID() + '/p/' + album.json_slides.content['s'+slide.getID()].previousPhoto)
 
                     // save state
-                    slide.saveStage(album.json_slides.content[slide.getID()].previousPhoto)
+                    slide.saveStage(album.json_slides.content['s'+slide.getID()].previousPhoto)
 
-                } else web.goto(album.getID() + '/s/' + album.json_slides.content[slide.getID()].previousPhoto)
+                } else web.goto(album.getID() + '/s/' + album.json_slides.content['s'+slide.getID()].previousPhoto)
             }, delay)
 
         }
@@ -13539,8 +13705,8 @@ album = {
 
         if (slide.getID() !== false &&
             album.json_slides &&
-            album.json_slides.content[slide.getID()] &&
-            album.json_slides.content[slide.getID()].nextPhoto !== '') {
+            album.json_slides.content['s'+slide.getID()] &&
+            album.json_slides.content['s'+slide.getID()].nextPhoto !== '') {
 
             let delay = 0
 
@@ -13561,13 +13727,13 @@ album = {
                 if (slide.getID() === false) return false
                 if (visible.presentation()) {
 
-                    web.goto(album.getID() + '/p/' + album.json_slides.content[slide.getID()].nextPhoto)
+                    web.goto(album.getID() + '/p/' + album.json_slides.content['s'+slide.getID()].nextPhoto)
 
                     // save state
-                    console.log(album.json_slides.content[slide.getID()].nextPhoto)
-                    slide.saveStage(album.json_slides.content[slide.getID()].nextPhoto)
+                    console.log(album.json_slides.content['s'+slide.getID()].nextPhoto)
+                    slide.saveStage(album.json_slides.content['s'+slide.getID()].nextPhoto)
 
-                } else web.goto(album.getID() + '/s/' + album.json_slides.content[slide.getID()].nextPhoto)
+                } else web.goto(album.getID() + '/s/' + album.json_slides.content['s'+slide.getID()].nextPhoto)
             }, delay)
 
         }
@@ -13593,17 +13759,17 @@ album = {
             slideIDs.forEach(function (id, index, array) {
 
                 // Change reference for the next and previous slide
-                if (album.json_slides.content[id].nextPhoto !== '' || album.json_slides.content[id].previousPhoto !== '') {
+                if (album.json_slides.content['s'+id].nextPhoto !== '' || album.json_slides.content['s'+id].previousPhoto !== '') {
 
-                    nextPhoto = album.json_slides.content[id].nextPhoto
-                    previousPhoto = album.json_slides.content[id].previousPhoto
+                    nextPhoto = album.json_slides.content['s'+id].nextPhoto
+                    previousPhoto = album.json_slides.content['s'+id].previousPhoto
 
-                    album.json_slides.content[previousPhoto].nextPhoto = nextPhoto
-                    album.json_slides.content[nextPhoto].previousPhoto = previousPhoto
+                    album.json_slides.content['s'+previousPhoto].nextPhoto = nextPhoto
+                    album.json_slides.content['s'+nextPhoto].previousPhoto = previousPhoto
 
                 }
 
-                delete album.json_slides.content[id]
+                delete album.json_slides.content['s'+id]
                 view.album.content.delete(id)
 
             })
@@ -13667,14 +13833,22 @@ album = {
 
     slide.sort = function (albumID) {
 
-        let slideOrder = web.toc.children().map(function () {
+        let slideOrder = web.toc.find('.slide').map(function () {
             return $(this).data("id")
+        }).get()
+
+        let folders = web.toc.find('.slide').map(function () {
+            return $(this).closest('.folder').attr('data-id')
         }).get()
 
         var params = {
             albumID: albumID,
-            photoOrder: slideOrder
+            slideOrder: slideOrder,
+            folders: folders
         }
+
+        console.log('Slide::setPosition')
+        console.log(params)
 
         api.post("Slide::setPosition", params, function (data) {
             if (data !== true) web.error(null, params, data)
@@ -13779,12 +13953,12 @@ photo = {
 
         if (album.json &&
             album.json.content &&
-            album.json.content[photoID] &&
-            album.json.content[photoID].nextPhoto != '') {
+            album.json.content['p'+photoID] &&
+            album.json.content['p'+photoID].nextPhoto != '') {
 
-            let nextPhoto = album.json.content[photoID].nextPhoto
-            let url = album.json.content[nextPhoto].url
-            let medium = album.json.content[nextPhoto].medium
+            let nextPhoto = album.json.content['p'+photoID].nextPhoto
+            let url = album.json.content['p'+nextPhoto].url
+            let medium = album.json.content['p'+nextPhoto].medium
             let href = (medium != null && medium !== '' ? medium : url)
 
             $('head [data-prefetch]').remove()
@@ -13804,8 +13978,8 @@ photo = {
 
         if (photo.getID() !== false &&
             album.json &&
-            album.json.content[photo.getID()] &&
-            album.json.content[photo.getID()].previousPhoto !== '') {
+            album.json.content['p'+photo.getID()] &&
+            album.json.content['p'+photo.getID()].previousPhoto !== '') {
 
             let delay = 0
 
@@ -13824,7 +13998,7 @@ photo = {
 
             setTimeout(() => {
                 if (photo.getID() === false) return false
-                web.goto(album.getID() + '/' + album.json.content[photo.getID()].previousPhoto)
+                web.goto(album.getID() + '/' + album.json.content['p'+photo.getID()].previousPhoto)
             }, delay)
 
         }
@@ -13835,8 +14009,8 @@ photo = {
 
         if (photo.getID() !== false &&
             album.json &&
-            album.json.content[photo.getID()] &&
-            album.json.content[photo.getID()].nextPhoto !== '') {
+            album.json.content['p'+photo.getID()] &&
+            album.json.content['p'+photo.getID()].nextPhoto !== '') {
 
             let delay = 0
 
@@ -13855,7 +14029,7 @@ photo = {
 
             setTimeout(() => {
                 if (photo.getID() === false) return false
-                web.goto(album.getID() + '/' + album.json.content[photo.getID()].nextPhoto)
+                web.goto(album.getID() + '/' + album.json.content['p'+photo.getID()].nextPhoto)
             }, delay)
 
         }
@@ -13896,7 +14070,7 @@ photo = {
 
             // Get title if only one photo is selected
             if (visible.photo()) photoTitle = photo.json.title
-            else photoTitle = album.json.content[photoIDs].title
+            else photoTitle = album.json.content['p'+photoIDs].title
 
             // Fallback for photos without a title
             if (photoTitle === '') photoTitle = 'Untitled'
@@ -13913,17 +14087,17 @@ photo = {
             photoIDs.forEach(function (id, index, array) {
 
                 // Change reference for the next and previous photo
-                if (album.json.content[id].nextPhoto !== '' || album.json.content[id].previousPhoto !== '') {
+                if (album.json.content['p'+id].nextPhoto !== '' || album.json.content['p'+id].previousPhoto !== '') {
 
-                    nextPhoto = album.json.content[id].nextPhoto
-                    previousPhoto = album.json.content[id].previousPhoto
+                    nextPhoto = album.json.content['p'+id].nextPhoto
+                    previousPhoto = album.json.content['p'+id].previousPhoto
 
-                    album.json.content[previousPhoto].nextPhoto = nextPhoto
-                    album.json.content[nextPhoto].previousPhoto = previousPhoto
+                    album.json.content['p'+previousPhoto].nextPhoto = nextPhoto
+                    album.json.content['p'+nextPhoto].previousPhoto = previousPhoto
 
                 }
 
-                delete album.json.content[id]
+                delete album.json.content['p'+id]
                 view.album.content.delete(id)
 
             })
@@ -13992,7 +14166,7 @@ photo = {
 
             // Get old title if only one photo is selected
             if (photo.json) oldTitle = photo.json.title
-            else if (album.json) oldTitle = album.json.content[photoIDs].title
+            else if (album.json) oldTitle = album.json.content['p'+photoIDs].title
 
         }
 
@@ -14008,7 +14182,7 @@ photo = {
             }
 
             photoIDs.forEach(function (id, index, array) {
-                album.json.content[id].title = newTitle
+                album.json.content['p'+id].title = newTitle
                 view.album.content.title(id)
             })
 
@@ -14057,17 +14231,17 @@ photo = {
         photoIDs.forEach(function (id, index, array) {
 
             // Change reference for the next and previous photo
-            if (album.json.content[id].nextPhoto !== '' || album.json.content[id].previousPhoto !== '') {
+            if (album.json.content['p'+id].nextPhoto !== '' || album.json.content['p'+id].previousPhoto !== '') {
 
-                nextPhoto = album.json.content[id].nextPhoto
-                previousPhoto = album.json.content[id].previousPhoto
+                nextPhoto = album.json.content['p'+id].nextPhoto
+                previousPhoto = album.json.content['p'+id].previousPhoto
 
-                album.json.content[previousPhoto].nextPhoto = nextPhoto
-                album.json.content[nextPhoto].previousPhoto = previousPhoto
+                album.json.content['p'+previousPhoto].nextPhoto = nextPhoto
+                album.json.content['p'+nextPhoto].previousPhoto = previousPhoto
 
             }
 
-            delete album.json.content[id]
+            delete album.json.content['p'+id]
             view.album.content.delete(id)
 
         })
@@ -14102,7 +14276,7 @@ photo = {
         }
 
         photoIDs.forEach(function (id, index, array) {
-            album.json.content[id].star = (album.json.content[id].star === '0' ? '1' : '0')
+            album.json.content['p'+id].star = (album.json.content['p'+id].star === '0' ? '1' : '0')
             view.album.content.star(id)
         })
 
@@ -14157,7 +14331,7 @@ photo = {
 
         }
 
-        album.json.content[photoID].public = (album.json.content[photoID].public === '0' ? '1' : '0')
+        album.json.content['p'+photoID].public = (album.json.content['p'+photoID].public === '0' ? '1' : '0')
         view.album.content.public(photoID)
 
         albums.refresh()
@@ -14226,15 +14400,15 @@ photo = {
 
         // Get tags
         if (visible.photo() || visible.slide()) oldTags = photo.json.tags
-        else if (visible.album() && photoIDs.length === 1) oldTags = album.json.content[photoIDs].tags
-        else if (visible.search() && photoIDs.length === 1) oldTags = album.json.content[photoIDs].tags
+        else if (visible.album() && photoIDs.length === 1) oldTags = album.json.content['p'+photoIDs].tags
+        else if (visible.search() && photoIDs.length === 1) oldTags = album.json.content['p'+photoIDs].tags
         else if (visible.album() && photoIDs.length > 1) {
             let same = true
             photoIDs.forEach(function (id, index, array) {
-                if (album.json.content[id].tags === album.json.content[photoIDs[0]].tags && same === true) same = true
+                if (album.json.content['p'+id].tags === album.json.content['p'+photoIDs[0]].tags && same === true) same = true
                 else same = false
             })
-            if (same === true) oldTags = album.json.content[photoIDs[0]].tags
+            if (same === true) oldTags = album.json.content['p'+photoIDs[0]].tags
         }
 
         // Improve tags
@@ -14283,7 +14457,7 @@ photo = {
         }
 
         photoIDs.forEach(function (id, index, array) {
-            album.json.content[id].tags = tags
+            album.json.content['p'+id].tags = tags
         })
 
         let params = {
@@ -14921,10 +15095,13 @@ photo = {
         return null == t || "" === t ? sidebar_slideshow._dom : sidebar_slideshow._dom.find(t)
     }, sidebar_slideshow.show = function () {
         return (web.content.addClass("content--sidebar_left"), sidebar_slideshow.dom().addClass("active"), header.dom().addClass('header--sidebar_left'), !0)
+        // return (header.dom().addClass('header--sidebar_left'), !0)
     }, sidebar_slideshow.hide = function () {
         return (web.content.removeClass("content--sidebar_left"), sidebar_slideshow.dom().removeClass("active"), header.dom().removeClass('header--sidebar_left'), !0)
+        // return (header.dom().removeClass('header--sidebar_left'), !0)
     }, sidebar_slideshow.toggle = function () {
         return (web.content.toggleClass("content--sidebar_left"), sidebar_slideshow.dom().toggleClass("active"), header.dom().toggleClass('header--sidebar_left'), !0)
+        // return (header.dom().toggleClass('header--sidebar_left'), !0)
     },
 
 
@@ -16483,7 +16660,7 @@ photo = {
 
                 }
 
-                console.log('slidesData')
+                // console.log('slidesData')
                 // console.log(slidesData)
 
                 $.each(slidesData, function (i, v) {
@@ -16527,6 +16704,7 @@ photo = {
                 }); */
 
                 web.toc.find('.folder').sortable({
+                    connectWith: '.folder',
                     revert: true,
                     stop: function (t, e) {
                         console.log('folder sortable')
@@ -16540,7 +16718,7 @@ photo = {
                     update: function (e, ui) {
                         // ui.item.css("background", "red") // For example.
 
-                        console.log(ui.item)
+                        // console.log(ui.item)
 
                         let albumID = ui.item.data('album-id'),
                             photoID = ui.item.data('photo-id'),
@@ -16573,11 +16751,13 @@ photo = {
 
                             })
                         } else {
+                            console.log('slide.sort')
                             slide.sort(albumID)
                         }
 
                     }
                 });
+
 
 
                 web.content.find('.photo-inner').draggable({
@@ -16654,7 +16834,7 @@ photo = {
 
             title: function (photoID) {
 
-                let title = album.json.content[photoID].title
+                let title = album.json.content['p'+photoID].title
 
                 title = web.escapeHTML(title)
 
@@ -16668,7 +16848,7 @@ photo = {
 
                 let $badge = $('.photo[data-id="' + photoID + '"] .icn-star')
 
-                if (album.json.content[photoID].star === '1') $badge.addClass('badge--visible')
+                if (album.json.content['p'+photoID].star === '1') $badge.addClass('badge--visible')
                 else $badge.removeClass('badge--visible')
 
             },
@@ -16677,7 +16857,7 @@ photo = {
 
                 let $badge = $('.photo[data-id="' + photoID + '"] .icn-share')
 
-                if (album.json.content[photoID].public === '1') $badge.addClass('badge--visible')
+                if (album.json.content['p'+photoID].public === '1') $badge.addClass('badge--visible')
                 else $badge.removeClass('badge--visible')
 
             },
@@ -16791,7 +16971,7 @@ photo = {
             web.slideview.addClass('presentation')
             header.setMode('presentation')
             header.hide()
-            sidebar_slideshow.hide()
+            // sidebar_slideshow.hide()
             sidebar.hide()
             $('#s_note').attr('disabled', true)
             $('#save_note').hide()
@@ -16805,7 +16985,7 @@ photo = {
             console.log(album.json)
             console.log('hiu')
             header.setMode('photo')
-            sidebar_slideshow.show()
+            // sidebar_slideshow.show()
 
             if (!web.publicMode) {
                 $('#save_note').show()
@@ -16948,8 +17128,8 @@ photo = {
             let $nextArrow = web.imageview.find('a#next')
             let $previousArrow = web.imageview.find('a#previous')
             let photoID = photo.getID()
-            let hasNext = album.json && album.json.content && album.json.content[photoID] && album.json.content[photoID].nextPhoto != null && album.json.content[photoID].nextPhoto !== ''
-            let hasPrevious = album.json && album.json.content && album.json.content[photoID] && album.json.content[photoID].previousPhoto != null && album.json.content[photoID].previousPhoto !== ''
+            let hasNext = album.json && album.json.content && album.json.content['p'+photoID] && album.json.content['p'+photoID].nextPhoto != null && album.json.content['p'+photoID].nextPhoto !== ''
+            let hasPrevious = album.json && album.json.content && album.json.content['p'+photoID] && album.json.content['p'+photoID].previousPhoto != null && album.json.content['p'+photoID].previousPhoto !== ''
 
             if (hasNext === false || web.viewMode === true) {
 
@@ -16957,8 +17137,8 @@ photo = {
 
             } else {
 
-                let nextPhotoID = album.json.content[photoID].nextPhoto
-                let nextPhoto = album.json.content[nextPhotoID]
+                let nextPhotoID = album.json.content['p'+photoID].nextPhoto
+                let nextPhoto = album.json.content['p'+nextPhotoID]
 
                 $nextArrow.css('background-image', web.html `linear-gradient(to bottom, rgba(0, 0, 0, .4), rgba(0, 0, 0, .4)), url("$${ nextPhoto.thumbUrl }")`)
 
@@ -16970,8 +17150,8 @@ photo = {
 
             } else {
 
-                let previousPhotoID = album.json.content[photoID].previousPhoto
-                let previousPhoto = album.json.content[previousPhotoID]
+                let previousPhotoID = album.json.content['p'+photoID].previousPhoto
+                let previousPhoto = album.json.content['p'+previousPhotoID]
 
                 $previousArrow.css('background-image', web.html `linear-gradient(to bottom, rgba(0, 0, 0, .4), rgba(0, 0, 0, .4)), url("$${ previousPhoto.thumbUrl }")`)
 
@@ -17069,8 +17249,8 @@ photo = {
             let $nextArrow = web.slideview.find('a#s_next')
             let $previousArrow = web.slideview.find('a#s_previous')
             let slideID = slide.getID()
-            let hasNext = album.json_slides && album.json_slides.content && album.json_slides.content[slideID] && album.json_slides.content[slideID].nextPhoto != null && album.json_slides.content[slideID].nextPhoto !== ''
-            let hasPrevious = album.json_slides && album.json_slides.content && album.json_slides.content[slideID] && album.json_slides.content[slideID].previousPhoto != null && album.json_slides.content[slideID].previousPhoto !== ''
+            let hasNext = album.json_slides && album.json_slides.content && album.json_slides.content['s'+slideID] && album.json_slides.content['s'+slideID].nextPhoto != null && album.json_slides.content['s'+slideID].nextPhoto !== ''
+            let hasPrevious = album.json_slides && album.json_slides.content && album.json_slides.content['s'+slideID] && album.json_slides.content['s'+slideID].previousPhoto != null && album.json_slides.content['s'+slideID].previousPhoto !== ''
 
             if (hasNext === false || web.viewMode === true) {
 
@@ -17078,8 +17258,8 @@ photo = {
 
             } else {
 
-                let nextPhotoID = album.json_slides.content[slideID].nextPhoto
-                let nextPhoto = album.json_slides.content[nextPhotoID]
+                let nextPhotoID = album.json_slides.content['s'+slideID].nextPhoto
+                let nextPhoto = album.json_slides.content['s'+nextPhotoID]
 
                 $nextArrow.css('background-image', web.html `linear-gradient(to bottom, rgba(0, 0, 0, .4), rgba(0, 0, 0, .4)), url("$${ nextPhoto.thumbUrl }")`)
 
@@ -17091,8 +17271,8 @@ photo = {
 
             } else {
 
-                let previousPhotoID = album.json_slides.content[slideID].previousPhoto
-                let previousPhoto = album.json_slides.content[previousPhotoID]
+                let previousPhotoID = album.json_slides.content['s'+slideID].previousPhoto
+                let previousPhoto = album.json_slides.content['s'+previousPhotoID]
 
                 $previousArrow.css('background-image', web.html `linear-gradient(to bottom, rgba(0, 0, 0, .4), rgba(0, 0, 0, .4)), url("$${ previousPhoto.thumbUrl }")`)
 
@@ -17203,7 +17383,7 @@ photo = {
             else {
                 let firstKey = Object.keys(album.json_slides.content)[0]
 
-                startSlide = album.json_slides.content[firstKey].id
+                startSlide = album.json_slides.content['s'+firstKey].id
             }
 
             // save state
@@ -17400,7 +17580,13 @@ photo = {
                 web.goto(album.getID() + '/' + $(this).attr('data-id'))
             })
             .on('click', '.slide', function () {
-                web.goto(album.getID() + '/s/' + $(this).attr('data-id'))
+                if (visible.presentation()) {
+                    web.goto(album.getID() + '/p/' + $(this).attr('data-id'))
+
+                    // save state
+                    slide.saveStage($(this).attr('data-id'))
+                }
+                else web.goto(album.getID() + '/s/' + $(this).attr('data-id'))
             })
 
             // Context Menu
@@ -17412,6 +17598,9 @@ photo = {
             })
             .on('contextmenu', '.slide', function (e) {
                 contextMenu.slide($(".slide:hover, .slide.active").attr("data-id"), e)
+            })
+            .on('contextmenu', '.folder_title', function (e) {
+                contextMenu.folder($(".folder:hover, .folder.active").attr("data-id"), e)
             })
 
             // Upload

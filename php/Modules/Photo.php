@@ -676,7 +676,8 @@ final class Photo {
 		$photo['tags']   = $data['tags'];
 		$photo['public'] = $data['public'];
 		$photo['star']   = $data['star'];
-		$photo['album']  = $data['album'];
+        $photo['album']  = $data['album'];
+		$photo['position']  = $data['position'];
 
         if ($photo['album'] != 0) {
             $PHOTOS_MANAGER_URL_UPLOADS__ = PHOTOS_MANAGER_URL_UPLOADS.'/'.$photo['album'];

@@ -124,7 +124,7 @@ final class Albums
          * Unsorted
          */
 
-        $query = Database::prepare(Database::get(), "SELECT thumbUrl FROM ? WHERE album = 0 AND (user_identifier = '?' OR public = 1) " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS, $_SESSION['identifier']));
+        $query = Database::prepare(Database::get(), "SELECT thumbUrl FROM ? WHERE album = 0 AND (user_identifier = '?' OR public = 1) ORDER BY position DESC, id DESC", array(PHOTOS_MANAGER_TABLE_PHOTOS, $_SESSION['identifier']));
         $unsorted = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
         $i = 0;
 
@@ -153,7 +153,7 @@ final class Albums
          * Starred
          */
 
-        $query = Database::prepare(Database::get(), "SELECT thumbUrl, album FROM ? WHERE star = 1 AND (user_identifier = '?' OR public = 1) " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS, $_SESSION['identifier']));
+        $query = Database::prepare(Database::get(), "SELECT thumbUrl, album FROM ? WHERE star = 1 AND (user_identifier = '?' OR public = 1) ORDER BY position DESC, id DESC", array(PHOTOS_MANAGER_TABLE_PHOTOS, $_SESSION['identifier']));
         $starred = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
         $i = 0;
 
@@ -186,7 +186,7 @@ final class Albums
          * Public
          */
 
-        $query = Database::prepare(Database::get(), "SELECT thumbUrl, album FROM ? WHERE public = 1 " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
+        $query = Database::prepare(Database::get(), "SELECT thumbUrl, album FROM ? WHERE public = 1 ORDER BY position DESC, id DESC", array(PHOTOS_MANAGER_TABLE_PHOTOS));
         $public = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
         $i = 0;
 
@@ -219,7 +219,7 @@ final class Albums
          * Recent
          */
 
-        $query = Database::prepare(Database::get(), "SELECT thumbUrl, album FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) AND (user_identifier = '?' OR public = 1)" . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS, $_SESSION['identifier']));
+        $query = Database::prepare(Database::get(), "SELECT thumbUrl, album FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) AND (user_identifier = '?' OR public = 1)ORDER BY position DESC, id DESC", array(PHOTOS_MANAGER_TABLE_PHOTOS, $_SESSION['identifier']));
         $recent = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
         $i = 0;
 

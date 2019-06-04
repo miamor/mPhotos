@@ -82,7 +82,7 @@ final class Slide {
 		Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
 
-        $query = Database::prepare(Database::get(), "SELECT s.id slide_id, p.*, s.* FROM ? s LEFT JOIN ? p ON s.photo_id = p.id WHERE s.album_id = ? ORDER BY s.position ASC, s.id ASC", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, PHOTOS_MANAGER_TABLE_PHOTOS, $albumID));
+        $query = Database::prepare(Database::get(), "SELECT s.id slide_id, p.*, s.* FROM ? s LEFT JOIN ? p ON s.photo_id = p.id LEFT JOIN ? f ON s.folder_id = f.id WHERE s.album_id = ? AND s.folder_id != 0 ORDER BY f.position ASC, f.id ASC, s.position ASC, s.id ASC", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, PHOTOS_MANAGER_TABLE_PHOTOS, PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $albumID));
         // Get photos
         $photos = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
         $previousPhotoID = '';
@@ -103,12 +103,12 @@ final class Slide {
 			$photo['nextPhoto']     = '';
 
 			// Set current photoID as nextPhoto of previous photo
-			if ($previousPhotoID!=='') $return['content'][$previousPhotoID]['nextPhoto'] = $photo['id'];
+			if ($previousPhotoID!=='') $return['content']['s'.$previousPhotoID]['nextPhoto'] = $photo['id'];
 			$previousPhotoID = $photo['id'];
 
 
 			// Add to return
-			$return['content'][$photo['id']] = $photo;
+			$return['content']['s'.$photo['id']] = $photo;
 
 		}
 
@@ -124,8 +124,8 @@ final class Slide {
 			$firstElementId = $firstElement['id'];
 
 			if ($lastElementId!==$firstElementId) {
-				$return['content'][$lastElementId]['nextPhoto']      = $firstElementId;
-				$return['content'][$firstElementId]['previousPhoto'] = $lastElementId;
+				$return['content']['s'.$lastElementId]['nextPhoto']      = $firstElementId;
+				$return['content']['s'.$firstElementId]['previousPhoto'] = $lastElementId;
 			}
 
 		}
@@ -144,12 +144,13 @@ final class Slide {
 
     public function setPosition() {
 		// Check dependencies
-		Validator::required(isset($_POST['photoOrder']), __METHOD__);
+		Validator::required(isset($_POST['slideOrder'], $_POST['folders']), __METHOD__);
 
 		// Call plugins
 		Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
-		$id_list = implode(',', $_POST['photoOrder']);
+        $id_list = implode(',', $_POST['slideOrder']);
+        $folders = implode(',', $_POST['folders']);
 		$indices = [];
 		$size = count(explode(',',$id_list));
 		for($i = 0; $i < $size; $i++){
@@ -162,8 +163,19 @@ final class Slide {
 				function ($id, $value) {
 					return "WHEN {$id} THEN {$value}";
 				},
-				explode(',',$id_list),
+				explode(',', $id_list),
 				$indices
+			)
+        );
+        
+		$whens_folders = implode(
+			"  ",
+			array_map(
+				function ($id, $value) {
+					return "WHEN {$id} THEN {$value}";
+				},
+				explode(',', $id_list),
+				explode(',', $folders)
 			)
         );
         
@@ -182,6 +194,9 @@ final class Slide {
         */
 
 		$query  = Database::prepare(Database::get(), "UPDATE ? SET position = CASE id ? END WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $whens, $id_list));
+		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+
+		$query  = Database::prepare(Database::get(), "UPDATE ? SET folder_id = CASE id ? END WHERE id IN (?)", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $whens_folders, $id_list));
 		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
 		// Call plugins

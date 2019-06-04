@@ -59,6 +59,10 @@ final class Admin extends Access
                 break;
             case 'Album::addFolder':self::addFolderAction();
                 break;
+            case 'Album::setFolderTitle':self::setFolderTitleAction();
+                break;
+            case 'Album::deleteFolder':self::deleteFolderAction();
+                break;
             case 'Album::getFolders':self::getFoldersAction();
                 break;
             case 'Album::import':self::importAlbumAction();
@@ -138,7 +142,7 @@ final class Admin extends Access
     private static function setPositionSlideshowAction()
     {
 
-        Validator::required(isset($_POST['albumID'], $_POST['photoOrder']), __METHOD__);
+        Validator::required(isset($_POST['albumID'], $_POST['slideOrder'], $_POST['folders']), __METHOD__);
 
         $slide = new Slide();
         Response::json($slide->setPosition());
@@ -332,6 +336,24 @@ final class Admin extends Access
 
         $album = new Album($_POST['albumID']);
         Response::json($album->addFolder($_POST['title'], $_POST['parent_folder']), JSON_NUMERIC_CHECK);
+
+    }
+
+    private static function setFolderTitleAction()
+    {
+
+        Validator::required(isset($_POST['title'], $_POST['albumID'], $_POST['folderID']), __METHOD__);
+        $album = new Album($_POST['albumID']);
+        Response::json($album->setFolderTitle($_POST['folderID'], $_POST['title']), JSON_NUMERIC_CHECK);
+
+    }
+
+    private static function deleteFolderAction()
+    {
+
+        Validator::required(isset($_POST['albumID'], $_POST['folderIDs']), __METHOD__);
+        $album = new Album($_POST['albumID']);
+        Response::json($album->deleteFolder($_POST['folderIDs']), JSON_NUMERIC_CHECK);
 
     }
 

@@ -20,6 +20,8 @@ final class Guest extends Access {
             case 'Slide::getSlides':                self::getSlidesAction(); break;
             case 'Slide::getSlide':                 self::getSlideAction(); break;
 
+            case 'Slide::setPosition':              self::setPositionSlideshowAction(); break;
+
 
 			// Albums functions
 			case 'Albums::get':       self::getAlbumsAction(); break;
@@ -27,6 +29,8 @@ final class Guest extends Access {
 			// Album functions
 			case 'Album::get':        self::getAlbumAction(); break;
 			case 'Album::getPublic':  self::checkAlbumAccessAction(); break;
+
+            case 'Album::setPosition':self::setPositionAction(); break;
 
 			// Photo functions
 			case 'Photo::get':        self::getPhotoAction(); break;
