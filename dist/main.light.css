@@ -244,18 +244,19 @@ input{-webkit-user-select:text!important;-moz-user-select:text!important;-ms-use
 
 .presentation#slideview,.presentation#slideview+.sidebar+.sidebar_slideshow{background:#333}
 .presentation#slideview+.sidebar+.sidebar_slideshow *{color:#fff}
+.presentation#slideview+.sidebar+.sidebar_slideshow svg{fill:rgba(252,252,252,.8)}
 .presentation#slideview+.sidebar+.sidebar_slideshow .folder.current_slide > .overlay,
 .presentation#slideview+.sidebar+.sidebar_slideshow .folder:hover > .overlay,
 .presentation#slideview+.sidebar+.sidebar_slideshow #mucluc .slide.active, 
 .presentation#slideview+.sidebar+.sidebar_slideshow #mucluc .slide.current, 
 .presentation#slideview+.sidebar+.sidebar_slideshow #mucluc .slide:hover{background:#222!important}
 .presentation#slideview #image{right:30%;bottom:0;z-index:999}
-.presentation#slideview .arrow_wrapper{width:28%;right:0;top:50px;height:200px}
-.presentation#slideview .arrow_wrapper a.i_next{position:relative;left:0;top:0;width:200px;height:200px;transform:none;display:block}
+.presentation#slideview .arrow_wrapper{width:24%;right:-1%;top:50px;height:150px}
+.presentation#slideview .arrow_wrapper a.i_next{position:relative;left:0;top:0;width:150px;height:150px;transform:none;display:block}
 .presentation#slideview .arrow_wrapper a.i_next svg{display:none!important}
 .presentation#slideview.view-detail.full #image{max-width:60%;max-height:100%}
-.presentation#slideview .slide-note{position:absolute;left:72%;width:24%;height:calc(100% - 300px);top:280px;background:transparent;color:#fff;border:0;border-top:1px solid rgba(73,168,168,.98);cursor:default!important}
-.presentation#slideview:after{content:'';position:fixed;top:0;left:0;right:30%;bottom:0;background:rgba(0,0,0,.18)}
+.presentation#slideview .slide-note{position:fixed;left:auto;right:1%;width:23%;padding:10px 0!important;height:calc(100% - 240px);top:220px;background:transparent;color:#fff;border:0;border-top:1px solid rgba(73,168,168,.98);cursor:default!important}
+.presentation#slideview:after{content:'';position:fixed;top:0;left:0;right:25%;bottom:0;background:rgba(0,0,0,.18)}
 .presentation#slideview .slide-note-text{width:100%;color:rgba(255,255,255,.9)}
 .presentation#slideview .button-save_note{display:none!important}
 

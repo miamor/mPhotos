@@ -13546,7 +13546,7 @@ album = {
 
         console.log('startSlide = ' + slideID)
 
-        let currentIndex = Object.keys(album.json_slides.content).indexOf(slideID)
+        let currentIndex = Object.keys(album.json_slides.content).indexOf('s'+slideID)
 
         localStorage.setItem('currentStage', JSON.stringify({
             slideID: slideID,
@@ -17383,7 +17383,7 @@ photo = {
             else {
                 let firstKey = Object.keys(album.json_slides.content)[0]
 
-                startSlide = album.json_slides.content['s'+firstKey].id
+                startSlide = album.json_slides.content[firstKey].id
             }
 
             // save state
@@ -17600,7 +17600,7 @@ photo = {
                 contextMenu.slide($(".slide:hover, .slide.active").attr("data-id"), e)
             })
             .on('contextmenu', '.folder_title', function (e) {
-                contextMenu.folder($(".folder:hover, .folder.active").attr("data-id"), e)
+                contextMenu.folder($(this).closest(".folder:hover, .folder.active").attr("data-id"), e)
             })
 
             // Upload

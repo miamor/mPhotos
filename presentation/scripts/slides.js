@@ -29,18 +29,26 @@ api.post = function (fn, params, callback) {
 
 
 var slide_data = []
+var slide_keys = []
 var m = {
     albumID: localStorage.getItem('albumID')
 }
 api.post("Slide::getSlides", m, function (o) {
     //console.log(o)
     var j = 0
+    slide_keys = Object.keys(o.content)
     $.each(o.content, function (i, slide) {
-        slide_data.push({
-            'src': '../' + slide.url,
-            'title': '', //slide.title,
-            'copy': slide.description ? slide.description : ''
-        })
+        // slide_data.push({
+        //     'src': '../' + slide.url,
+        //     'title': '', //slide.title,
+        //     'copy': slide.description ? slide.description : ''
+        // })
+        // console.log(i)
+        slide_data['s'+slide.id] = {
+                'src': '../' + slide.url,
+                'title': '', //slide.title,
+                'copy': slide.description ? slide.description : ''
+            }
     })
     console.log(slide_data)
     presentation(slide_data)
@@ -51,6 +59,9 @@ function presentation(slide_data) {
         currentIndex = parseInt(currentStage.index),
         nextIndex = currentIndex < slide_data.length - 1 ? currentIndex + 1 : 0,
         prevIndex = currentIndex > 0 ? currentIndex - 1 : slide_data.length - 1
+    var currentKey = slide_keys[currentIndex],
+        nextKey = slide_keys[nextIndex],
+        prevKey = slide_keys[prevIndex]
 
     var slides = [],
         captions = []
@@ -62,7 +73,8 @@ function presentation(slide_data) {
     // var caption = document.getElementById('slider-caption')
     // var caption_heading = caption.querySelector('caption-heading')
 
-    for (var i = 0; i < slide_data.length; i++) {
+    // for (var i = 0; i < slide_data.length; i++) {
+    for (var i in slide_data) {
         var slide = document.createElement('div'),
             caption = document.createElement('div'),
             slide_title = document.createElement('div')
@@ -74,15 +86,15 @@ function presentation(slide_data) {
         slide_title.innerHTML = '<h1>' + slide_data[i].title + '</h1>'
 
         switch (i) {
-            case currentIndex:
+            case currentKey:
                 slide.classList.add('current')
                 caption.classList.add('current-caption')
                 break
-            case nextIndex:
+            case nextKey:
                 slide.classList.add('next')
                 caption.classList.add('next-caption')
                 break
-            case prevIndex:
+            case prevKey:
                 slide.classList.add('prev')
                 caption.classList.add('previous-caption')
                 break
