@@ -11596,15 +11596,16 @@ album = {
         let html = ''
 
         html += web.html `
-	        <div class='folder' data-album-id='$${ data.album }' data-id='$${ data.id }'>
+	        <div class='folder active' data-album-id='$${ data.album }' data-id='$${ data.id }'>
                 <div class='overlay' onclick="folder.toggle('$${data.id}')">
                     <div class="right btns">
                         <a class="button button_add_folder" onclick="folder.add('$${data.id}', '$${data.title}')" title="Add folder">
                             <svg class="iconic"><use xlink:href="#plus"></use></svg>
                         </a>
                     </div>
-                    <h1 class='folder_title' title='$${ data.title }'><i class='fa fa-chevron-right'></i> <span>$${ data.title }</span></h1>
+                    <h1 class='folder_title' title='$${ data.title }'><i class='fa fa-chevron-down'></i> <span>$${ data.title }</span></h1>
                 </div>
+                <div class='slide slide_init'></div>
             </div>
             `
 
@@ -13838,7 +13839,7 @@ album = {
             return $(this).data("id")
         }).get()
 
-        let folders = web.toc.find('.slide').map(function () {
+        let folders = web.toc.find('.slide:not(".slide_init")').map(function () {
             return $(this).closest('.folder').attr('data-id')
         }).get()
 
@@ -16634,8 +16635,67 @@ photo = {
                 }
 
                 console.log('slidesFoldersData')
+                view.album.folders.allowsort()
 
                 // web.toc.html(slidesFoldersData)
+
+            },
+
+            allowsort: function () {
+                web.toc.find('.folder').sortable({
+                    connectWith: '.folder',
+                    revert: true,
+                    stop: function (t, e) {
+                        console.log('folder sortable')
+                        // slide.sort(e.item.data("album-id"))
+                    },
+                    dragover: function (e, ui) {
+                        ui.item.removeClass('photo photo-inner').addClass('slide')
+
+                        // $(this).css('background', 'red')
+                    },
+                    update: function (e, ui) {
+                        // ui.item.css("background", "red") // For example.
+
+                        // console.log(ui.item)
+
+                        let albumID = ui.item.data('album-id'),
+                            photoID = ui.item.data('photo-id'),
+                            folderID = parseInt($(this).closest('.folder').attr('data-id'))
+
+                        let params = {
+                            albumID: albumID,
+                            photoID: photoID,
+                            folderID: folderID
+                        }
+                        console.log(params)
+
+                        if (albumID && photoID && ui.item.hasClass('addSlide')) {
+                            console.log('update this folder ' + folderID)
+                            console.log(ui.item)
+
+                            ui.item.removeClass('addSlide')
+
+                            ui.item.removeClass('photo photo-inner').addClass('slide').attr('data-photo-id', photoID).attr('data-id', '').attr('style', '')
+
+                            api.post("Slide::add", params, function (data) {
+
+                                console.log('Slide::add returned ' + data)
+
+                                ui.item.attr('data-id', data)
+
+                                slide.sort(albumID)
+
+                                album.getSlides(albumID, false, false)
+
+                            })
+                        } else {
+                            console.log('slide.sort')
+                            slide.sort(albumID)
+                        }
+
+                    }
+                })
 
             }
 
@@ -16704,61 +16764,19 @@ photo = {
                     }
                 }); */
 
-                web.toc.find('.folder').sortable({
-                    connectWith: '.folder',
-                    revert: true,
-                    stop: function (t, e) {
-                        console.log('folder sortable')
-                        // slide.sort(e.item.data("album-id"))
-                    },
-                    dragover: function (e, ui) {
-                        ui.item.removeClass('photo photo-inner').addClass('slide')
-
-                        // $(this).css('background', 'red')
-                    },
-                    update: function (e, ui) {
-                        // ui.item.css("background", "red") // For example.
-
-                        // console.log(ui.item)
-
-                        let albumID = ui.item.data('album-id'),
-                            photoID = ui.item.data('photo-id'),
-                            folderID = parseInt($(this).closest('.folder').attr('data-id'))
-
-                        let params = {
-                            albumID: albumID,
-                            photoID: photoID,
-                            folderID: folderID
-                        }
-                        console.log(params)
-
-                        if (albumID && photoID && ui.item.hasClass('addSlide')) {
-                            console.log('update this folder ' + folderID)
-                            console.log(ui.item)
-
-                            ui.item.removeClass('addSlide')
-
-                            ui.item.removeClass('photo photo-inner').addClass('slide').attr('data-photo-id', photoID).attr('data-id', '').attr('style', '')
-
-                            api.post("Slide::add", params, function (data) {
-
-                                console.log('Slide::add returned ' + data)
-
-                                ui.item.attr('data-id', data)
-
-                                slide.sort(albumID)
-
-                                album.getSlides(albumID, false, false)
-
-                            })
-                        } else {
-                            console.log('slide.sort')
-                            slide.sort(albumID)
-                        }
-
-                    }
-                });
-
+                // web.toc.find('.folder').droppable({
+                //     accept: ".addSlide",
+                //     classes: {
+                //         "ui-droppable-active": "ui-state-highlight"
+                //     },
+                //     drop: function (event, ui) {
+                //         // deleteImage( ui.draggable )
+                //         console.log(ui)
+                //         // console.log($(this))
+                //     }
+                // })        
+            
+                view.album.folders.allowsort()
 
 
                 web.content.find('.photo-inner').draggable({
@@ -16774,6 +16792,7 @@ photo = {
                     },
                     helper: function (event) {
                         console.log($(this))
+                        
                         let albumID = parseInt($(this).attr('data-album-id')),
                             photoID = parseInt($(this).attr('data-id')),
                             title = $(this).find('.overlay h1').attr('title'),
@@ -16781,8 +16800,6 @@ photo = {
                         let {
                             path: retinaThumbUrl
                         } = web.retinize(thumbUrl)
-
-                        $(this).closest('.folder').css('background', 'red')
 
                         return $(`<div class='slide addSlide' data-album-id='${ albumID }' data-photo-id='${ photoID }' style='visibility: visible!important'>
                             <img src='${ thumbUrl }' srcset='${ retinaThumbUrl } 1x' width='20' height='20' alt='Photo thumbnail' draggable='false'>
@@ -17580,7 +17597,7 @@ photo = {
             .on('click', '.photo', function () {
                 web.goto(album.getID() + '/' + $(this).attr('data-id'))
             })
-            .on('click', '.slide', function () {
+            .on('click', '.slide:not(".slide_init")', function () {
                 if (visible.presentation()) {
                     web.goto(album.getID() + '/p/' + $(this).attr('data-id'))
 

@@ -269,13 +269,15 @@ input{-webkit-user-select:text!important;-moz-user-select:text!important;-ms-use
 .sidebar_slideshow.active{-ms-transform:translateX(300px);transform:translateX(300px)}
 .sidebar_slideshow__header{float:left;height:49px;width:100%;background:linear-gradient(to bottom,rgba(255,255,255,.02),transparent);border-bottom:1px solid rgba(73,168,168,.98)}
 
+.folder.hovering{font-weight:600!important}
 #mucluc{padding:6px 0;position:relative;overflow:auto}
 #mucluc .slide{position:relative;*width:calc(100% - 20px);padding:4px 15px 6px 25px;clear:both;*min-height:20px;color:#5e5e5e}
-.slide:before{font-family:'Font Awesome 5 Free';content:'\f1c5';position: absolute;top:4px;left:8px;font-size:13px}
+.addSlide{z-index:100000!important}
+.slide:not(.slide_init):before{font-family:'Font Awesome 5 Free';content:'\f1c5';position: absolute;top:4px;left:8px;font-size:13px}
 #mucluc .slide img, .photo-inner img{float:left;margin-right:10px;display:none}
 /*#mucluc .photo > *{display:inline-block}*/
 #mucluc .slide .overlay, .photo-inner .overlay{font-size:13px;*float:left;margin-top:0}
-#mucluc .slide.active,#mucluc .slide.current,#mucluc .slide:hover{background:rgba(218,218,218,.8)!important}
+#mucluc .slide.active,#mucluc .slide.current,#mucluc .slide:not(.slide_init):hover{background:rgba(218,218,218,.8)!important}
 .slide-note{position: absolute;bottom:0;left:0;right:0;width:calc(100% - 20px);height:200px;border:0;border-top:1px solid rgba(73,168,168,.98);color:#222;font-size:14px;padding:10px;background:#f9f9f9}
 
 .folder{position:relative;*min-height:30px;*background:rgba(0,0,0,.12);*border-bottom:1px solid #e3e3e3;*border-top:1px solid #fff;*margin-bottom:10px}
