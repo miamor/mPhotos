@@ -57,12 +57,13 @@ api.post("Slide::getSlides", m, function (o) {
 function presentation(slide_data) {
     var currentStage = JSON.parse(localStorage.getItem('currentStage')),
         currentIndex = parseInt(currentStage.index),
-        nextIndex = currentIndex < slide_data.length - 1 ? currentIndex + 1 : 0,
-        prevIndex = currentIndex > 0 ? currentIndex - 1 : slide_data.length - 1
+        nextIndex = currentIndex < slide_keys.length - 1 ? currentIndex + 1 : 0,
+        prevIndex = currentIndex > 0 ? currentIndex - 1 : (slide_keys.length - 1)
     var currentKey = slide_keys[currentIndex],
         nextKey = slide_keys[nextIndex],
         prevKey = slide_keys[prevIndex]
 
+    console.log(currentIndex)
     var slides = [],
         captions = []
 
@@ -112,6 +113,7 @@ function presentation(slide_data) {
 
     console.log(currentStage)
     console.log(slides)
+    
 
     var reloadSlides = setInterval(function () {
         setSlide()
@@ -122,13 +124,16 @@ function presentation(slide_data) {
 
     function setSlide() {
         currentStage_new = JSON.parse(localStorage.getItem('currentStage'))
+        console.log(currentStage_new)
         currentIndex_new = parseInt(currentStage_new.index)
-        nextIndex_new = currentIndex_new < slide_data.length - 1 ? currentIndex_new + 1 : 0
-        prevIndex_new = currentIndex_new > 0 ? currentIndex_new - 1 : slide_data.length - 1
+        nextIndex_new = currentIndex_new < slide_keys.length - 1 ? currentIndex_new + 1 : 0
+        prevIndex_new = currentIndex_new > 0 ? (currentIndex_new - 1) : (slide_keys.length - 1)
+
+        currentKey_new = slide_keys[currentIndex_new]
+        nextKey_new = slide_keys[nextIndex_new]
+        prevKey_new = slide_keys[prevIndex_new]
 
         if (currentIndex_new !== currentIndex) {
-            console.log('currentStage new:')
-            console.log(currentStage_new)
             slides[currentIndex].classList.remove('current')
             slides[currentIndex_new].classList.add('current')
             slides[nextIndex].classList.remove('next')
