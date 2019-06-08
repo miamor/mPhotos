@@ -39,7 +39,7 @@ final class Album
         Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
         // Properties
-        $id = generateID();
+        // $id = generateID();
         $sysstamp = time();
 
         // Database
@@ -51,19 +51,19 @@ final class Album
             $query = Database::prepare(Database::get(), "INSERT INTO ? (title, album_id, import_id) VALUES ('?', '?', '?')", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $title, $this->albumIDs, $import_id));
         }
 
-        $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        $result = Database::execute_add(Database::get(), $query, __METHOD__, __LINE__);
 
         // Call plugins
         Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
         // return array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $id, $title, $this->albumIDs);
 
-        if ($result === false) {
+        if ($result['result'] === false) {
             return false;
         }
 
         if ($return_folder_id) {
-            return $id;
+            return $result['insert_id'];
         }
 
         // return Slide::getSlides($this->albumIDs);

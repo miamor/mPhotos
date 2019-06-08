@@ -28,14 +28,14 @@ final class Slide {
             Plugins::get()->activate(__METHOD__, 0, func_get_args());
 
             // Properties
-            $id       = generateID();
+            // $id       = generateID();
             $sysstamp = time();
 
             //Response::error("INSERT INTO ? (id, album_id, photo_id) VALUES ('?', '?', '?') ~~~~~ ".PHOTOS_MANAGER_TABLE_SLIDESHOW.' ---- '.$id.'~'.$albumID.'~'.$photoID);
             // Database
             // $query  = Database::prepare(Database::get(), "INSERT INTO ? (id, album_id, photo_id, folder_id) VALUES ('?', '?', '?', '?')", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $id, $albumID, $photoID, $folderID));
             $query  = Database::prepare(Database::get(), "INSERT INTO ? (album_id, photo_id, folder_id) VALUES ('?', '?', '?')", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $albumID, $photoID, $folderID));
-            $result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+            $result = Database::execute_add(Database::get(), $query, __METHOD__, __LINE__);
 
             /*$values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $id, $info['title'], $photo_name, $info['description'], $info['tags'], $info['type'], $info['width'], $info['height'], $info['size'], $info['iso'], $info['aperture'], $info['make'], $info['model'], $info['shutter'], $info['focal'], $info['takestamp'], $path_thumb, $albumID, $public, $star, $checksum, $medium);
             $query  = Database::prepare(Database::get(), "INSERT INTO ? (id, title, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum, medium) VALUES ('?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?')", $values);
@@ -46,8 +46,12 @@ final class Slide {
             // Call plugins
             Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-            if ($result === false) return false;
+            if ($result['result'] === false) return false;
+
+            $id = $result['insert_id'];
             return $id;
+            // return $id;
+
         } else {
             Response::error('No album or photo detected!');
         }

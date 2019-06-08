@@ -11812,8 +11812,9 @@ album = {
 
         let html = ''
 
-        if (tags !== '') {
+        if (tags && tags !== '' && tags.indexOf(',') > -1) {
 
+            console.log(tags)
             tags = tags.split(',')
 
             tags.forEach(function (tag, index, array) {

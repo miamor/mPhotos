@@ -416,6 +416,31 @@ final class Database {
 
 	}
 
+
+	/**
+	 * @return object|false Returns the results on success.
+	 */
+	public static function execute_add($connection, $query, $function, $line) {
+
+		// Check dependencies
+		Validator::required(isset($connection, $query), __METHOD__);
+
+		// Only activate logging when $function and $line is set
+		$logging = ($function===null||$line===null ? false : true);
+
+		// Execute query
+		$result = $connection->query($query);
+
+		// Check if execution failed
+		if ($result===false) {
+			if ($logging===true) Log::error($connection, $function, $line, $connection->error);
+			return false;
+		}
+
+		return array('result'=>$result, 'insert_id'=>$connection->insert_id);
+
+	}
+
 }
 
 ?>

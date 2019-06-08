@@ -262,9 +262,9 @@ final class Photo {
 		// $query  = Database::prepare(Database::get(), "INSERT INTO ? (id, title, user_identifier, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum, medium) VALUES ('?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?')", $values);
 		$values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $info['title'], $_SESSION['identifier'], $photo_name, $info['description'], $info['tags'], $info['type'], $info['width'], $info['height'], $info['size'], $info['iso'], $info['aperture'], $info['make'], $info['model'], $info['shutter'], $info['focal'], $info['takestamp'], $path_thumb, $albumID, $public, $star, $checksum, $medium);
 		$query  = Database::prepare(Database::get(), "INSERT INTO ? (title, user_identifier, url, description, tags, type, width, height, size, iso, aperture, make, model, shutter, focal, takestamp, thumbUrl, album, public, star, checksum, medium) VALUES ('?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?')", $values);
-		$result = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+		$result = Database::execute_add(Database::get(), $query, __METHOD__, __LINE__);
 
-		if ($result===false) {
+		if ($result['result'] === false) {
 			if ($returnOnError===true) return false;
 			Response::error('Could not save photo in database!');
 		}
@@ -272,7 +272,10 @@ final class Photo {
 		// Call plugins
 		Plugins::get()->activate(__METHOD__, 1, func_get_args());
 
-		return $id;
+        // return $id;
+        
+        $id = $result['insert_id'];
+        return $id;
 
 	}
 
@@ -1269,7 +1272,7 @@ final class Photo {
 		while ($photo = $photos->fetch_object()) {
 
 			// Generate id
-			$id = generateID();
+			// $id = generateID();
 
 			// Duplicate entry
 			// $values = array(PHOTOS_MANAGER_TABLE_PHOTOS, $id, PHOTOS_MANAGER_TABLE_PHOTOS, $photo->id);
