@@ -75,12 +75,13 @@ function presentation(slide_data) {
 
     // for (var i = 0; i < slide_data.length; i++) {
     for (var i in slide_data) {
-        var slide = document.createElement('div'),
+        var slide = document.createElement('img'),
             caption = document.createElement('div'),
             slide_title = document.createElement('div')
 
         slide.classList.add('slide')
-        slide.setAttribute('style', 'background:url(' + slide_data[i].src + ')')
+        // slide.setAttribute('style', 'background:url(' + slide_data[i].src + ')')
+        slide.setAttribute('src', slide_data[i].src)
         caption.classList.add('caption')
         slide_title.classList.add('caption-heading')
         slide_title.innerHTML = '<h1>' + slide_data[i].title + '</h1>'
