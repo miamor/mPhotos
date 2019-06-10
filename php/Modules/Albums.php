@@ -87,15 +87,15 @@ final class Albums
                 while ($thumb = $thumbs->fetch_object()) {
                 
                     // get first photo with this checksum
-                    $query = Database::prepare(Database::get(), "SELECT album FROM ? WHERE checksum = '?' ORDER BY id ASC LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $thumb->checksum));
-                    $ref_photo = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
-                    if ($ref_photo === false) {
-                        return false;
-                    }
-                    $ref_photo = $ref_photo->fetch_assoc();
+                    // $query = Database::prepare(Database::get(), "SELECT album FROM ? WHERE checksum = '?' ORDER BY id ASC LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $thumb->checksum));
+                    // $ref_photo = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+                    // if ($ref_photo === false) {
+                    //     return false;
+                    // }
+                    // $ref_photo = $ref_photo->fetch_assoc();
 
-                    if ($ref_photo['album'] != 0) {
-                        $PHOTOS_MANAGER_URL_UPLOADS = PHOTOS_MANAGER_URL_UPLOADS . '/' . $ref_photo['album'];
+                    if ($album['id'] != 0) {
+                        $PHOTOS_MANAGER_URL_UPLOADS = PHOTOS_MANAGER_URL_UPLOADS . '/' . $album['id'];
                         $PHOTOS_MANAGER_URL_UPLOADS_THUMB = $PHOTOS_MANAGER_URL_UPLOADS . '/thumb/';
                     }
 
@@ -249,16 +249,16 @@ final class Albums
 
         while ($row3 = $recent->fetch_object()) {
             // get first photo with this checksum
-            $query = Database::prepare(Database::get(), "SELECT album FROM ? WHERE checksum = '?' ORDER BY id ASC LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $row3->checksum));
-            $ref_photo = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
-            if ($ref_photo === false) {
-                return false;
-            }
-            $ref_photo = $ref_photo->fetch_assoc();
+            // $query = Database::prepare(Database::get(), "SELECT album FROM ? WHERE checksum = '?' ORDER BY id ASC LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $row3->checksum));
+            // $ref_photo = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+            // if ($ref_photo === false) {
+            //     return false;
+            // }
+            // $ref_photo = $ref_photo->fetch_assoc();
 
             if ($i < 3) {
-                if ($row3 && $ref_photo->album != 0) {
-                    $PHOTOS_MANAGER_URL_UPLOADS_THUMB = PHOTOS_MANAGER_URL_UPLOADS . '/' . $ref_photo->album . '/thumb/';
+                if ($row3 && $row3->album != 0) {
+                    $PHOTOS_MANAGER_URL_UPLOADS_THUMB = PHOTOS_MANAGER_URL_UPLOADS . '/' . $row3->album . '/thumb/';
                 } else {
                     $PHOTOS_MANAGER_URL_UPLOADS_THUMB = PHOTOS_MANAGER_URL_UPLOADS_THUMB;
                 }

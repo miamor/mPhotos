@@ -202,14 +202,15 @@ final class Photo
         }
 
         // Check if image exists based on checksum
-        if ($checksum === false) {
+        // if ($checksum === false) {
 
-            $checksum = '';
+        //     $checksum = '';
+        //     $exists = false;
+
+        // } else {
+
+            // $exists = $this->exists($checksum);
             $exists = false;
-
-        } else {
-
-            $exists = $this->exists($checksum);
 
             if ($exists !== false) {
                 $photo_name = $exists['photo_name'];
@@ -219,7 +220,7 @@ final class Photo
                 $exists = true;
             }
 
-        }
+        // }
 
         if ($exists === false) {
 
@@ -738,12 +739,12 @@ final class Photo
     {
 
         // get first photo with this checksum
-        $query = Database::prepare(Database::get(), "SELECT album, thumbUrl FROM ? WHERE checksum = '?' ORDER BY id ASC LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $data['checksum']));
-        $ref_photo = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
-        if ($ref_photo === false) {
-            return false;
-        }
-        $ref_photo = $ref_photo->fetch_assoc();
+        // $query = Database::prepare(Database::get(), "SELECT album, thumbUrl FROM ? WHERE checksum = '?' ORDER BY id ASC LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $data['checksum']));
+        // $ref_photo = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        // if ($ref_photo === false) {
+        //     return false;
+        // }
+        // $ref_photo = $ref_photo->fetch_assoc();
 
         // Excepts the following:
         // (array) $data = ['id', 'title', 'tags', 'public', 'star', 'album', 'thumbUrl', 'takestamp', 'url', 'medium']
@@ -761,7 +762,7 @@ final class Photo
         $photo['position'] = $data['position'];
 
         if ($photo['album'] != 0) {
-            $PHOTOS_MANAGER_URL_UPLOADS__ = PHOTOS_MANAGER_URL_UPLOADS . '/' . $ref_photo['album'];
+            $PHOTOS_MANAGER_URL_UPLOADS__ = PHOTOS_MANAGER_URL_UPLOADS . '/' . $photo['album'];
         } else {
             $PHOTOS_MANAGER_URL_UPLOADS__ = PHOTOS_MANAGER_URL_UPLOADS;
         }
@@ -838,20 +839,20 @@ final class Photo
             $photo['takedate'] = strftime('%d %b. %Y %T', $photo['takestamp']);
         }
 
-        
+
 
         // get first photo with this checksum
-        $query = Database::prepare(Database::get(), "SELECT album FROM ? WHERE checksum = '?' ORDER BY id ASC LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $photo['checksum']));
-        $ref_photo = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
-        if ($ref_photo === false) {
-            return false;
-        }
-        $ref_photo = $ref_photo->fetch_assoc();
+        // $query = Database::prepare(Database::get(), "SELECT album FROM ? WHERE checksum = '?' ORDER BY id ASC LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $photo['checksum']));
+        // $ref_photo = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        // if ($ref_photo === false) {
+        //     return false;
+        // }
+        // $ref_photo = $ref_photo->fetch_assoc();
 
 
 
-        if ($ref_photo['album'] != 0) {
-            $this->PHOTOS_MANAGER_URL_UPLOADS = PHOTOS_MANAGER_URL_UPLOADS . '/' . $ref_photo['album'];
+        if ($photo['album'] != 0) {
+            $this->PHOTOS_MANAGER_URL_UPLOADS = PHOTOS_MANAGER_URL_UPLOADS . '/' . $photo['album'];
             $this->PHOTOS_MANAGER_URL_UPLOADS_THUMB = $this->PHOTOS_MANAGER_URL_UPLOADS . '/thumb/';
             $this->PHOTOS_MANAGER_URL_UPLOADS_MEDIUM = $this->PHOTOS_MANAGER_URL_UPLOADS . '/medium/';
             $this->PHOTOS_MANAGER_URL_UPLOADS_BIG = $this->PHOTOS_MANAGER_URL_UPLOADS . '/big/';
