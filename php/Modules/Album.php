@@ -630,23 +630,23 @@ final class Album
 
             case 'f':
                 $return['public'] = '0';
-                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position FROM ? WHERE star = 1 ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position, checksum FROM ? WHERE star = 1 ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS));
                 break;
 
             case 's':
                 $return['public'] = '1';
                 // $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium FROM ? WHERE public = 1 OR album = 0 " . Settings::get()['sortingPhotos'], array(PHOTOS_MANAGER_TABLE_PHOTOS));
-                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position FROM ? WHERE public = 1 ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position, checksum FROM ? WHERE public = 1 ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS));
                 break;
 
             case 'r':
                 $return['public'] = '0';
-                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position, checksum FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS));
                 break;
 
             case '0':
                 $return['public'] = '0';
-                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position FROM ? WHERE album = 0 ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position, checksum FROM ? WHERE album = 0 ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS));
                 break;
 
             default:
@@ -654,7 +654,7 @@ final class Album
                 $albums = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
                 $return = $albums->fetch_assoc();
                 $return = Album::prepareData($return);
-                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position FROM ? WHERE album = '?' ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
+                $query = Database::prepare(Database::get(), "SELECT id, title, tags, public, star, album, thumbUrl, takestamp, url, medium, position, checksum FROM ? WHERE album = '?' ORDER BY position ASC, id ASC", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
                 break;
 
         }

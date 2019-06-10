@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: May 25, 2019 at 04:51 PM
+-- Generation Time: Jun 10, 2019 at 03:58 AM
 -- Server version: 10.1.31-MariaDB
 -- PHP Version: 7.2.4
 
@@ -351,7 +351,29 @@ INSERT INTO `log` (`id`, `time`, `type`, `function`, `line`, `text`) VALUES
 (280, 1558082825, 'error', 'PhotosManager\\Modules\\Album::import', 361, 'Unknown column \'album_id\' in \'where clause\''),
 (281, 1558082876, 'error', 'PhotosManager\\Modules\\Album::import', 361, 'Unknown column \'album_id\' in \'where clause\''),
 (282, 1558096927, 'error', 'PhotosManager\\Modules\\Album::getIdentifier', 988, 'Could not find specified album'),
-(283, 1558096927, 'error', 'PhotosManager\\Modules\\Album::getPublic', 1028, 'Could not find specified album');
+(283, 1558096927, 'error', 'PhotosManager\\Modules\\Album::getPublic', 1028, 'Could not find specified album'),
+(284, 1558796815, 'notice', 'PhotosManager\\Modules\\Session::login', 96, 'User (admin) has logged in from 127.0.0.1'),
+(285, 1559482054, 'notice', 'PhotosManager\\Modules\\Session::login', 96, 'User (admin) has logged in from 127.0.0.1'),
+(286, 1559488057, 'error', 'PhotosManager\\Modules\\Album::setPosition', 935, 'You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near \'THEN 0  WHEN 1 THEN 1  WHEN 2 THEN 2  WHEN 3 THEN 3  WHEN 4 THEN 4  WHEN 5 THEN \' at line 1'),
+(287, 1559489542, 'error', 'PhotosManager\\Modules\\Album::setFolderTitle', 666, 'You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near \'\' at line 1'),
+(288, 1559492929, 'error', 'PhotosManager\\Modules\\Slide::getSlide', 207, 'You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near \'\\[object%20Object\\] LIMIT 1\' at line 1'),
+(289, 1559495910, 'error', 'PhotosManager\\Modules\\Slide::setPosition', 199, 'You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near \'END WHERE id IN (9,17,20,10,22,21,23)\' at line 1'),
+(290, 1559495910, 'error', 'PhotosManager\\Modules\\Slide::setPosition', 199, 'You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near \'END WHERE id IN (9,17,20,10,22,21,23)\' at line 1'),
+(291, 1559495938, 'error', 'PhotosManager\\Modules\\Slide::setPosition', 200, 'You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near \'END WHERE id IN (9,17,20,10,22,21,23)\' at line 1'),
+(292, 1559495938, 'error', 'PhotosManager\\Modules\\Slide::setPosition', 200, 'You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near \'END WHERE id IN (9,17,20,10,22,21,23)\' at line 1'),
+(293, 1560000923, 'error', 'PhotosManager\\Modules\\Slide::getSlide', 231, 'Could not find specified photo'),
+(294, 1560000930, 'error', 'PhotosManager\\Modules\\Slide::getSlide', 231, 'Could not find specified photo'),
+(295, 1560001017, 'error', 'PhotosManager\\Modules\\Slide::getSlide', 231, 'Could not find specified photo'),
+(296, 1560001026, 'error', 'PhotosManager\\Modules\\Slide::getSlide', 231, 'Could not find specified photo'),
+(297, 1560001027, 'error', 'PhotosManager\\Modules\\Slide::getSlide', 231, 'Could not find specified photo'),
+(298, 1560001080, 'error', 'PhotosManager\\Modules\\Photo::add', 149, 'Photo format not supported'),
+(299, 1560001876, 'notice', 'PhotosManager\\Modules\\Photo::add', 239, 'Skipped adjustment of photo (5e60539ed1abf1a013958fe87afbf9d9)'),
+(300, 1560004584, 'error', 'PhotosManager\\Modules\\Slide::setPosition', 204, 'You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near \'THEN 8 END WHERE id IN (9,17,20,10,22,21,33,27,30,25,24,26,28,29,23,31,32)\' at line 1'),
+(301, 1560006303, 'error', 'PhotosManager\\Modules\\Slide::setPosition', 204, 'You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near \'THEN 8  WHEN  THEN 8  WHEN  THEN 8  WHEN  THEN 9  WHEN  THEN 9 END WHERE id IN (\' at line 1'),
+(302, 1560006314, 'error', 'PhotosManager\\Modules\\Slide::setPosition', 204, 'You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near \'THEN 8  WHEN  THEN 8  WHEN  THEN 9  WHEN  THEN 9  WHEN  THEN 9 END WHERE id IN (\' at line 1'),
+(303, 1560006336, 'error', 'PhotosManager\\Modules\\Slide::setPosition', 204, 'You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near \'THEN 8  WHEN  THEN 9  WHEN  THEN 9  WHEN  THEN 9  WHEN  THEN 9 END WHERE id IN (\' at line 1'),
+(304, 1560006340, 'error', 'PhotosManager\\Modules\\Slide::setPosition', 204, 'You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near \'THEN 9  WHEN  THEN 9  WHEN  THEN 9  WHEN  THEN 9  WHEN  THEN 9 END WHERE id IN (\' at line 1'),
+(305, 1560006421, 'error', 'PhotosManager\\Modules\\Slide::getSlide', 226, 'Unknown column \'undefined\' in \'where clause\'');
 
 -- --------------------------------------------------------
 
@@ -392,40 +414,43 @@ CREATE TABLE `photos` (
 --
 
 INSERT INTO `photos` (`id`, `title`, `user_identifier`, `description`, `url`, `tags`, `public`, `type`, `width`, `height`, `size`, `iso`, `aperture`, `make`, `model`, `shutter`, `focal`, `takestamp`, `star`, `thumbUrl`, `album`, `checksum`, `medium`, `position`, `import_id`) VALUES
-(1, '3ABD77831', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '61b6794fcff61fa3a897c22ffe49be48.jpg', '', 0, 'image/jpeg', 1440, 900, '87.7 KB', '', '', '', '', '', '', 0, 0, '61b6794fcff61fa3a897c22ffe49be48.jpeg', 15580970805782, '3c3c2d9c8e6f6f8ed9353c94cbd39dcd7700b3fe', 0, 0, 15549499195246),
-(2, '3dnd6e94j4wy', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'e84039d3c8768e0d51093cda2499daed.jpg', '', 0, 'image/jpeg', 951, 1255, '168.9 KB', '', '', '', '', '', '', 0, 0, 'e84039d3c8768e0d51093cda2499daed.jpeg', 15580970805782, '7a75f3c6061bf9ec3c8ad00540d9f796db7d0363', 0, 0, 15544334815092),
-(3, 'planets', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '21624287b8e389bf0e24923cc1ea5cd4.jpg', '', 0, 'image/jpeg', 2560, 1600, '35.7 KB', '', '', '', '', '', '', 0, 0, '21624287b8e389bf0e24923cc1ea5cd4.jpeg', 15580970805782, '1c79612e0698cb25506bebb47b11fb074a3c2cf3', 0, 0, 15544335369555),
-(4, '25181709_868755343305643_747348745_n', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '377f377ef3193e17ca3cc5b97d1dfae2.jpg', '', 0, 'image/jpeg', 480, 480, '27.4 KB', '', '', '', '', '', '', 0, 0, '377f377ef3193e17ca3cc5b97d1dfae2.jpeg', 15580970805782, '845076e9ee86c14a5f95ba57875beccca1513b14', 0, 0, 15549481270158),
-(5, '3LfKwNH', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'ca5a0e5c50a8dbfce81f6326f354e1f5.jpg', '', 0, 'image/jpeg', 1680, 1050, '158.3 KB', '', '', '', '', '', '', 0, 0, 'ca5a0e5c50a8dbfce81f6326f354e1f5.jpeg', 15580970805782, 'f9f526e43d5bdcf7301121a26d953730b8af9715', 0, 0, 15549499198715),
-(6, '8d1f20f7ebf8e5a73c410a3df54f272d', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '96c6afb7976c9542e9a5172d7ce0567e.jpg', '', 0, 'image/jpeg', 2560, 1440, '91.2 KB', '', '', '', '', '', '', 0, 0, '96c6afb7976c9542e9a5172d7ce0567e.jpeg', 15580970805782, '1238fa47d3cf3d5b1b599957dd783b44887a716f', 0, 0, 15549499200341),
+(1, '3ABD77831', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '61b6794fcff61fa3a897c22ffe49be48.jpg', '', 0, 'image/jpeg', 1440, 900, '87.7 KB', '', '', '', '', '', '', 0, 0, '61b6794fcff61fa3a897c22ffe49be48.jpeg', 15580970805782, '3c3c2d9c8e6f6f8ed9353c94cbd39dcd7700b3fe', 0, 6, 15549499195246),
+(2, '3dnd6e94j4wy', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'e84039d3c8768e0d51093cda2499daed.jpg', '', 0, 'image/jpeg', 951, 1255, '168.9 KB', '', '', '', '', '', '', 0, 0, 'e84039d3c8768e0d51093cda2499daed.jpeg', 15580970805782, '7a75f3c6061bf9ec3c8ad00540d9f796db7d0363', 0, 4, 15544334815092),
+(3, 'planets', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '21624287b8e389bf0e24923cc1ea5cd4.jpg', '', 0, 'image/jpeg', 2560, 1600, '35.7 KB', '', '', '', '', '', '', 0, 0, '21624287b8e389bf0e24923cc1ea5cd4.jpeg', 15580970805782, '1c79612e0698cb25506bebb47b11fb074a3c2cf3', 0, 5, 15544335369555),
+(4, '25181709_868755343305643_747348745_n', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '377f377ef3193e17ca3cc5b97d1dfae2.jpg', '', 0, 'image/jpeg', 480, 480, '27.4 KB', '', '', '', '', '', '', 0, 0, '377f377ef3193e17ca3cc5b97d1dfae2.jpeg', 15580970805782, '845076e9ee86c14a5f95ba57875beccca1513b14', 0, 9, 15549481270158),
+(5, '3LfKwNH', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'ca5a0e5c50a8dbfce81f6326f354e1f5.jpg', '', 0, 'image/jpeg', 1680, 1050, '158.3 KB', '', '', '', '', '', '', 0, 0, 'ca5a0e5c50a8dbfce81f6326f354e1f5.jpeg', 15580970805782, 'f9f526e43d5bdcf7301121a26d953730b8af9715', 0, 7, 15549499198715),
+(6, '8d1f20f7ebf8e5a73c410a3df54f272d', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '96c6afb7976c9542e9a5172d7ce0567e.jpg', '', 0, 'image/jpeg', 2560, 1440, '91.2 KB', '', '', '', '', '', '', 0, 0, '96c6afb7976c9542e9a5172d7ce0567e.jpeg', 15580970805782, '1238fa47d3cf3d5b1b599957dd783b44887a716f', 0, 8, 15549499200341),
 (7, '82-1024x576', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'bf5c7fb459d47fc58dfb02468dbe6fd6.jpg', '', 0, 'image/jpeg', 1024, 576, '6.4 KB', '', '', '', '', '', '', 0, 0, 'bf5c7fb459d47fc58dfb02468dbe6fd6.jpeg', 15580970805782, '98f525bebaa1c1873ad030ca127ae1ed2534f583', 0, 0, 15549499202047),
-(8, '288267', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '77e03dfdc42459b707d13ef285e70801.png', '', 0, 'image/png', 2560, 1600, '30 KB', '', '', '', '', '', '', 0, 0, '77e03dfdc42459b707d13ef285e70801.jpeg', 15580970805782, 'ced0a23819a5489e3c58a75dd31cb15ee29f5d87', 0, 0, 15549499202742),
-(9, '598199', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '058b335bbbfd8afbb159b9fc0ade8cc8.jpg', '', 0, 'image/jpeg', 2560, 1440, '81.9 KB', '', '', '', '', '', '', 0, 0, '058b335bbbfd8afbb159b9fc0ade8cc8.jpeg', 15580970805782, 'aa075518fb534ac7e7d809c652520de64fa6a2ee', 0, 0, 15549499204871),
-(10, '24197212_862472633933914_1241900732_o', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'f203a694eb38a9d28935b5f6680c740a.jpg', '', 0, 'image/jpeg', 719, 1280, '143.3 KB', '', '', '', '', '', '', 0, 0, 'f203a694eb38a9d28935b5f6680c740a.jpeg', 15580970805782, '4b6fe4f1feb7704cd78361ef196c7578d5d43d5f', 0, 0, 15549499207804),
-(11, 'dai-gia-gatsby1', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '53ffb516fda073a6fbd3666ba46ef008.jpg', '', 0, 'image/jpeg', 960, 640, '75 KB', '', '', '', '', '', '', 0, 0, '53ffb516fda073a6fbd3666ba46ef008.jpeg', 15580970805782, 'a2c3279c7131db4b5f9d8d6522ad9fc04c091e54', 0, 0, 15549499208878),
-(12, '25114704_868493963331781_1598322348_n', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '4d959f1e815f3459b8e65b88909b286a.jpg', '', 0, 'image/jpeg', 736, 794, '56.3 KB', '', '', '', '', '', '', 0, 0, '4d959f1e815f3459b8e65b88909b286a.jpeg', 15580970805782, 'ccace022d2b033f2da736d1ab01efa14923eda4e', 0, 0, 15549499209806),
-(13, 'dai-gia-gatsby', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'e2dc5680471f5baa066ba6c5df7cd08c.jpg', '', 0, 'image/jpeg', 800, 600, '148.3 KB', '', '', '', '', '', '', 0, 0, 'e2dc5680471f5baa066ba6c5df7cd08c.jpeg', 15580970805782, 'c27e0e1335893e64181e0c7e6dbac2d199fd8235', 0, 0, 15549499210802),
-(14, 'famous_quotes_wallpapers_29', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'a0206a024218f786e5aded4144a7eeb9.jpg', '', 0, 'image/jpeg', 600, 375, '12.1 KB', '', '', '', '', '', '', 0, 0, 'a0206a024218f786e5aded4144a7eeb9.jpeg', 15580970805782, 'f580faf76fe81389b61c215249feeefbef2a5a21', 0, 0, 15549499211877),
-(15, '222779916_0a395635cc', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '9c7795b67585ea9a389f3c906dfea3ab.png', '', 0, 'image/png', 2560, 1600, '16 KB', '', '', '', '', '', '', 0, 0, '9c7795b67585ea9a389f3c906dfea3ab.jpeg', 15580970805782, '335d417f3cb779d4a70668425bb1e41adf4e6547', 0, 0, 15549499212541),
-(16, 'Great-Gatsby-wallpaper_03-620x350', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '8c69aabd519399af13575343b088976b.jpg', '', 0, 'image/jpeg', 620, 350, '77.9 KB', '', '', '', '', '', '', 0, 0, '8c69aabd519399af13575343b088976b.jpeg', 15580970805782, '6c11556f8db3e16ef06ed3befc20efd6bcc9112c', 0, 0, 15549499214262),
-(17, 'ice_cream_colorful_minimalist_sweet_66180_1920x1080', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'b38211363592ea3850e9696c887f65f0.jpg', '', 0, 'image/jpeg', 1920, 1080, '72.8 KB', '', '', '', '', '', '', 0, 0, 'b38211363592ea3850e9696c887f65f0.jpeg', 15580970805782, 'd27820c3240044f9c6b6f2400bfe848eaeaafdd3', 0, 0, 15549499214984),
-(18, 'Earth-540x337', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'c4eb07095f09c0ebfb0237b5438aa722.png', '', 0, 'image/png', 540, 337, '53.6 KB', '', '', '', '', '', '', 0, 0, 'c4eb07095f09c0ebfb0237b5438aa722.jpeg', 15580970805782, '2ca232068513ae6d48e23ac3b04b8df3470c36d8', 0, 0, 15549499216123),
-(19, 'iphone-x-minimal-dark-white-mockup-psd', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '4cd574c14d7b7be1ab5cf609e290956d.jpg', '', 0, 'image/jpeg', 850, 573, '29.9 KB', '', '', '', '', '', '', 0, 0, '4cd574c14d7b7be1ab5cf609e290956d.jpeg', 15580970805782, 'b55633b7e165784926a05f8c8b689af65ee217a1', 0, 0, 15549499216760),
-(20, 'minimalist_wallpaper_for_desktop_001', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '3910bf66d74c27a976487cfb27de1fe2.jpg', '', 0, 'image/jpeg', 2560, 1600, '70.1 KB', '', '', '', '', '', '', 0, 0, '3910bf66d74c27a976487cfb27de1fe2.jpeg', 15580970805782, '377e34faaacfb34811cc7df48120fb13d2015f2a', 0, 0, 15549499217519),
-(21, 'hd-black-wallpaper-1920x1080-wallpaper', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '18acb2fa9bf872e47987ffc8fc3ad84e.jpg', '', 0, 'image/jpeg', 1920, 1080, '51.6 KB', '', '', '', '', '', '', 0, 0, '18acb2fa9bf872e47987ffc8fc3ad84e.jpeg', 15580970805782, 'b9b819dfb2b45d47bf36ec879549a0759f7965b9', 0, 0, 15549499219047),
-(22, 'minimalism-wallpaper-minimalism-wallpaper-minimalist-wallpaper-iphone-6-minimalist-wallpaper-hd-mini', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '6a1aaf12b0d225117efc5b2dc53c68d7.png', '', 0, 'image/png', 2560, 1600, '46.9 KB', '', '', '', '', '', '', 0, 0, '6a1aaf12b0d225117efc5b2dc53c68d7.jpeg', 15580970805782, '36681073c68c89cc05edb502d1b189e0482caab3', 0, 0, 15549499220516),
-(23, 'planes-wallpapers-simple-colors-minimalistic-aircraft', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'bf4946ce000047ee7a6e60653bbf8e13.jpg', '', 0, 'image/jpeg', 2560, 1440, '95 KB', '', '', '', '', '', '', 0, 0, 'bf4946ce000047ee7a6e60653bbf8e13.jpeg', 15580970805782, '53858ed64588de3b79bc93e6796f9b09cf56fc01', 0, 0, 15549499222024),
-(24, 'My_Favorite_Book_by_Matt_Lowden', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '41df1aaa7fba6414ffe0d96c56a82620.jpg', '', 0, 'image/jpeg', 600, 383, '15.3 KB', '', '', '', '', '', '', 0, 0, '41df1aaa7fba6414ffe0d96c56a82620.jpeg', 15580970805782, '34854ac5dcd0144c36fc51e21350de4ff504a5ab', 0, 0, 15549499223342),
-(25, 's1', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '71dd3732c7d7b2aab6cac27feea1441b.jpg', '', 0, 'image/jpeg', 600, 375, '20.9 KB', '', '', '', '', '', '', 0, 0, '71dd3732c7d7b2aab6cac27feea1441b.jpeg', 15580970805782, 'e5812f9268b4f38f1f2f2eaef2fd513cf31af40e', 0, 0, 15549499223795),
-(26, 'niU10Et~', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'ea8c83c3689c359b478657c7d9950786.jpg', '', 0, 'image/jpeg', 1920, 1200, '27.8 KB', '', '', '', '', '', '', 0, 0, 'ea8c83c3689c359b478657c7d9950786.jpeg', 15580970805782, 'f26526dfb9ee771d2de6ece83b77a36f761f162f', 0, 0, 15549499224302),
-(27, 's2', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', 'image description', '2a2ea62d8b6969ece49ec289eb4558f2.jpg', '', 0, 'image/jpeg', 1131, 707, '33.1 KB', '', '', '', '', '', '', 0, 0, '2a2ea62d8b6969ece49ec289eb4558f2.jpeg', 15580970805782, 'c36cfa4368020fff90fb758b565b586ea5fa541b', 0, 0, 15549499225199),
-(28, 'topic~', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', 'crap~', '70416f7ab77396b048e079ad4a4c373b.jpg', '', 0, 'image/jpeg', 326, 285, '19.3 KB', '', '', '', '', '', '', 0, 0, '70416f7ab77396b048e079ad4a4c373b.jpeg', 15580970805782, '4ba12c54728f44ce4d9f65f50756357c5331bf8c', 0, 0, 15549499226137),
-(29, 'Space Ship Comet Neon Illustration Desktop Wallpaper', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '67b545363bec364999640822aa9f9a6b.jpg', '', 0, 'image/jpeg', 2880, 1800, '1.1 MB', '', '', '', '', '', '', 0, 0, '67b545363bec364999640822aa9f9a6b.jpeg', 15580970805782, 'e932d1526fe80b1326f0554c299d38c9973ce93e', 0, 0, 15549499226620),
-(30, 's3', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'af91c65a1854a9ea7c0fdebf8680dbc1.jpg', '', 0, 'image/jpeg', 2560, 1600, '79.4 KB', '', '', '', '', '', '', 0, 0, 'af91c65a1854a9ea7c0fdebf8680dbc1.jpeg', 15580970805782, 'f7ad4687386a0b76619972fda99749b60fa28fc0', 0, 0, 15549499229540),
-(31, 'World~', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', 'trfd', '78c02923dfd6896a6a27d6d45accd902.jpg', '', 0, 'image/jpeg', 1920, 1080, '95.9 KB', '', '', '', '', '', '', 0, 0, '78c02923dfd6896a6a27d6d45accd902.jpeg', 15580970805782, '721a936fc244fb24fe79ba63ade0f0d146b49631', 0, 0, 15549499230781),
-(32, 'solar-system-minimalism-q1', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'a313bb6317878993ede5e206f9ff3ea6.jpg', '', 0, 'image/jpeg', 3450, 2065, '141.4 KB', '', '', '', '', '', '', 0, 0, 'a313bb6317878993ede5e206f9ff3ea6.jpeg', 15580970805782, '2118d2716dbb05d4b14ec4074c9cbd715b487056', 0, 0, 15549499231858),
-(33, 'Screenshot from 2019-05-03 16-24-36', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '8607fa1251cdcc2a51eefdf1b0a9e604.png', '', 0, 'image/png', 1920, 1080, '740.6 KB', '', '', '', '', '', '', 0, 0, '8607fa1251cdcc2a51eefdf1b0a9e604.jpeg', 15580970805782, '19836b041898fe57a0144bb67b42fb2a31783f9d', 0, 0, 15569936258338),
-(34, 'Screenshot from 2019-05-04 13-48-21', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'f9fcfbc1d982b73152f00332728588c9.png', '', 0, 'image/png', 1004, 469, '157.2 KB', '', '', '', '', '', '', 0, 0, 'f9fcfbc1d982b73152f00332728588c9.jpeg', 15580970805782, '4ea8012df464626316507d38bd03449282e1212c', 0, 0, 15570237386597);
+(8, '288267', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '77e03dfdc42459b707d13ef285e70801.png', '', 0, 'image/png', 2560, 1600, '30 KB', '', '', '', '', '', '', 0, 0, '77e03dfdc42459b707d13ef285e70801.jpeg', 15580970805782, 'ced0a23819a5489e3c58a75dd31cb15ee29f5d87', 0, 10, 15549499202742),
+(9, '598199', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '058b335bbbfd8afbb159b9fc0ade8cc8.jpg', '', 0, 'image/jpeg', 2560, 1440, '81.9 KB', '', '', '', '', '', '', 0, 0, '058b335bbbfd8afbb159b9fc0ade8cc8.jpeg', 15580970805782, 'aa075518fb534ac7e7d809c652520de64fa6a2ee', 0, 11, 15549499204871),
+(10, '24197212_862472633933914_1241900732_o', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'f203a694eb38a9d28935b5f6680c740a.jpg', '', 0, 'image/jpeg', 719, 1280, '143.3 KB', '', '', '', '', '', '', 0, 0, 'f203a694eb38a9d28935b5f6680c740a.jpeg', 15580970805782, '4b6fe4f1feb7704cd78361ef196c7578d5d43d5f', 0, 12, 15549499207804),
+(11, 'dai-gia-gatsby1', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '53ffb516fda073a6fbd3666ba46ef008.jpg', '', 0, 'image/jpeg', 960, 640, '75 KB', '', '', '', '', '', '', 0, 0, '53ffb516fda073a6fbd3666ba46ef008.jpeg', 15580970805782, 'a2c3279c7131db4b5f9d8d6522ad9fc04c091e54', 0, 13, 15549499208878),
+(12, '25114704_868493963331781_1598322348_n', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '4d959f1e815f3459b8e65b88909b286a.jpg', '', 0, 'image/jpeg', 736, 794, '56.3 KB', '', '', '', '', '', '', 0, 0, '4d959f1e815f3459b8e65b88909b286a.jpeg', 15580970805782, 'ccace022d2b033f2da736d1ab01efa14923eda4e', 0, 14, 15549499209806),
+(13, 'dai-gia-gatsby', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'e2dc5680471f5baa066ba6c5df7cd08c.jpg', '', 0, 'image/jpeg', 800, 600, '148.3 KB', '', '', '', '', '', '', 0, 0, 'e2dc5680471f5baa066ba6c5df7cd08c.jpeg', 15580970805782, 'c27e0e1335893e64181e0c7e6dbac2d199fd8235', 0, 15, 15549499210802),
+(14, 'famous_quotes_wallpapers_29', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'a0206a024218f786e5aded4144a7eeb9.jpg', '', 0, 'image/jpeg', 600, 375, '12.1 KB', '', '', '', '', '', '', 0, 0, 'a0206a024218f786e5aded4144a7eeb9.jpeg', 15580970805782, 'f580faf76fe81389b61c215249feeefbef2a5a21', 0, 16, 15549499211877),
+(15, '222779916_0a395635cc', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '9c7795b67585ea9a389f3c906dfea3ab.png', '', 0, 'image/png', 2560, 1600, '16 KB', '', '', '', '', '', '', 0, 0, '9c7795b67585ea9a389f3c906dfea3ab.jpeg', 15580970805782, '335d417f3cb779d4a70668425bb1e41adf4e6547', 0, 17, 15549499212541),
+(16, 'Great-Gatsby-wallpaper_03-620x350', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '8c69aabd519399af13575343b088976b.jpg', '', 0, 'image/jpeg', 620, 350, '77.9 KB', '', '', '', '', '', '', 0, 0, '8c69aabd519399af13575343b088976b.jpeg', 15580970805782, '6c11556f8db3e16ef06ed3befc20efd6bcc9112c', 0, 18, 15549499214262),
+(17, 'ice_cream_colorful_minimalist_sweet_66180_1920x1080', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'b38211363592ea3850e9696c887f65f0.jpg', '', 0, 'image/jpeg', 1920, 1080, '72.8 KB', '', '', '', '', '', '', 0, 0, 'b38211363592ea3850e9696c887f65f0.jpeg', 15580970805782, 'd27820c3240044f9c6b6f2400bfe848eaeaafdd3', 0, 19, 15549499214984),
+(18, 'Earth-540x337', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'c4eb07095f09c0ebfb0237b5438aa722.png', '', 0, 'image/png', 540, 337, '53.6 KB', '', '', '', '', '', '', 0, 0, 'c4eb07095f09c0ebfb0237b5438aa722.jpeg', 15580970805782, '2ca232068513ae6d48e23ac3b04b8df3470c36d8', 0, 20, 15549499216123),
+(19, 'iphone-x-minimal-dark-white-mockup-psd', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '4cd574c14d7b7be1ab5cf609e290956d.jpg', '', 0, 'image/jpeg', 850, 573, '29.9 KB', '', '', '', '', '', '', 0, 0, '4cd574c14d7b7be1ab5cf609e290956d.jpeg', 15580970805782, 'b55633b7e165784926a05f8c8b689af65ee217a1', 0, 21, 15549499216760),
+(20, 'minimalist_wallpaper_for_desktop_001', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '3910bf66d74c27a976487cfb27de1fe2.jpg', '', 0, 'image/jpeg', 2560, 1600, '70.1 KB', '', '', '', '', '', '', 0, 0, '3910bf66d74c27a976487cfb27de1fe2.jpeg', 15580970805782, '377e34faaacfb34811cc7df48120fb13d2015f2a', 0, 22, 15549499217519),
+(21, 'hd-black-wallpaper-1920x1080-wallpaper', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '18acb2fa9bf872e47987ffc8fc3ad84e.jpg', '', 0, 'image/jpeg', 1920, 1080, '51.6 KB', '', '', '', '', '', '', 0, 0, '18acb2fa9bf872e47987ffc8fc3ad84e.jpeg', 15580970805782, 'b9b819dfb2b45d47bf36ec879549a0759f7965b9', 0, 23, 15549499219047),
+(22, 'minimalism-wallpaper-minimalism-wallpaper-minimalist-wallpaper-iphone-6-minimalist-wallpaper-hd-mini', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '6a1aaf12b0d225117efc5b2dc53c68d7.png', '', 0, 'image/png', 2560, 1600, '46.9 KB', '', '', '', '', '', '', 0, 0, '6a1aaf12b0d225117efc5b2dc53c68d7.jpeg', 15580970805782, '36681073c68c89cc05edb502d1b189e0482caab3', 0, 24, 15549499220516),
+(23, 'planes-wallpapers-simple-colors-minimalistic-aircraft', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'bf4946ce000047ee7a6e60653bbf8e13.jpg', '', 0, 'image/jpeg', 2560, 1440, '95 KB', '', '', '', '', '', '', 0, 0, 'bf4946ce000047ee7a6e60653bbf8e13.jpeg', 15580970805782, '53858ed64588de3b79bc93e6796f9b09cf56fc01', 0, 25, 15549499222024),
+(24, 'My_Favorite_Book_by_Matt_Lowden', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '41df1aaa7fba6414ffe0d96c56a82620.jpg', '', 0, 'image/jpeg', 600, 383, '15.3 KB', '', '', '', '', '', '', 0, 0, '41df1aaa7fba6414ffe0d96c56a82620.jpeg', 15580970805782, '34854ac5dcd0144c36fc51e21350de4ff504a5ab', 0, 26, 15549499223342),
+(25, 's1', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '71dd3732c7d7b2aab6cac27feea1441b.jpg', '', 0, 'image/jpeg', 600, 375, '20.9 KB', '', '', '', '', '', '', 0, 0, '71dd3732c7d7b2aab6cac27feea1441b.jpeg', 15580970805782, 'e5812f9268b4f38f1f2f2eaef2fd513cf31af40e', 0, 27, 15549499223795),
+(26, 'niU10Et~', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'ea8c83c3689c359b478657c7d9950786.jpg', '', 0, 'image/jpeg', 1920, 1200, '27.8 KB', '', '', '', '', '', '', 0, 0, 'ea8c83c3689c359b478657c7d9950786.jpeg', 15580970805782, 'f26526dfb9ee771d2de6ece83b77a36f761f162f', 0, 28, 15549499224302),
+(27, 's2', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', 'image description', '2a2ea62d8b6969ece49ec289eb4558f2.jpg', '', 0, 'image/jpeg', 1131, 707, '33.1 KB', '', '', '', '', '', '', 0, 0, '2a2ea62d8b6969ece49ec289eb4558f2.jpeg', 15580970805782, 'c36cfa4368020fff90fb758b565b586ea5fa541b', 0, 29, 15549499225199),
+(28, 'topic~', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', 'crap~', '70416f7ab77396b048e079ad4a4c373b.jpg', '', 0, 'image/jpeg', 326, 285, '19.3 KB', '', '', '', '', '', '', 0, 0, '70416f7ab77396b048e079ad4a4c373b.jpeg', 15580970805782, '4ba12c54728f44ce4d9f65f50756357c5331bf8c', 0, 30, 15549499226137),
+(29, 'Space Ship Comet Neon Illustration Desktop Wallpaper', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '67b545363bec364999640822aa9f9a6b.jpg', '', 0, 'image/jpeg', 2880, 1800, '1.1 MB', '', '', '', '', '', '', 0, 0, '67b545363bec364999640822aa9f9a6b.jpeg', 15580970805782, 'e932d1526fe80b1326f0554c299d38c9973ce93e', 0, 31, 15549499226620),
+(30, 's3', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'af91c65a1854a9ea7c0fdebf8680dbc1.jpg', '', 0, 'image/jpeg', 2560, 1600, '79.4 KB', '', '', '', '', '', '', 0, 0, 'af91c65a1854a9ea7c0fdebf8680dbc1.jpeg', 15580970805782, 'f7ad4687386a0b76619972fda99749b60fa28fc0', 0, 32, 15549499229540),
+(31, 'World~', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', 'trfd', '78c02923dfd6896a6a27d6d45accd902.jpg', '', 0, 'image/jpeg', 1920, 1080, '95.9 KB', '', '', '', '', '', '', 0, 0, '78c02923dfd6896a6a27d6d45accd902.jpeg', 15580970805782, '721a936fc244fb24fe79ba63ade0f0d146b49631', 0, 33, 15549499230781),
+(32, 'solar-system-minimalism-q1', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'a313bb6317878993ede5e206f9ff3ea6.jpg', '', 0, 'image/jpeg', 3450, 2065, '141.4 KB', '', '', '', '', '', '', 0, 0, 'a313bb6317878993ede5e206f9ff3ea6.jpeg', 15580970805782, '2118d2716dbb05d4b14ec4074c9cbd715b487056', 0, 34, 15549499231858),
+(33, 'Screenshot from 2019-05-03 16-24-36', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '8607fa1251cdcc2a51eefdf1b0a9e604.png', '', 0, 'image/png', 1920, 1080, '740.6 KB', '', '', '', '', '', '', 0, 0, '8607fa1251cdcc2a51eefdf1b0a9e604.jpeg', 15580970805782, '19836b041898fe57a0144bb67b42fb2a31783f9d', 0, 35, 15569936258338),
+(34, 'Screenshot from 2019-05-04 13-48-21', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'f9fcfbc1d982b73152f00332728588c9.png', '', 0, 'image/png', 1004, 469, '157.2 KB', '', '', '', '', '', '', 0, 0, 'f9fcfbc1d982b73152f00332728588c9.jpeg', 15580970805782, '4ea8012df464626316507d38bd03449282e1212c', 0, 36, 15570237386597),
+(40, '441107a878c67a27f944d4910e777361', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '2dbb1f9903ba025d5e744b8402beff7e.jpg', '', 0, 'image/jpeg', 3506, 2329, '1.1 MB', '', '', '', '', '', '', 0, 0, '2dbb1f9903ba025d5e744b8402beff7e.jpeg', 15580970805782, '600a64b574ae279a1784c1c28ca70acb6d3c2e30', 0, 1, NULL),
+(41, '5e60539ed1abf1a013958fe87afbf9d9', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', 'bf4693bf5a9a567b3cf255f170b91f49.jpeg', '', 0, 'image/jpeg', 3154, 1775, '2.9 MB', '80', 'f/2.2', 'HUAWEI', 'EVA-L09', '10000000/1000000000 s', '4.5 mm', 1515228027, 0, 'bf4693bf5a9a567b3cf255f170b91f49.jpeg', 15580970805782, 'd2666a9f4124e5a02c1f4218269c3b60355ab5b0', 0, 2, NULL),
+(39, '1', '$2a$10$RoTu4GtNVExfS579graxTO0G.dnoW7UaPNirxYchTVYSnlW336k3u', '', '12aff6009e2d8031be50ed8ec0eb9fe4.jpg', '', 0, 'image/jpeg', 757, 1218, '174.3 KB', '', '', '', '', '', '', 0, 0, '12aff6009e2d8031be50ed8ec0eb9fe4.jpeg', 15580970805782, '1ae7c3f4af5cef340851d7ad850441792f5dab73', 0, 3, NULL);
 
 -- --------------------------------------------------------
 
@@ -447,25 +472,28 @@ CREATE TABLE `presentation` (
 --
 
 INSERT INTO `presentation` (`id`, `album_id`, `photo_id`, `folder_id`, `position`, `note`) VALUES
-(1, 15580970805782, 33, 2, 0, NULL),
-(2, 15580970805782, 33, 1, 0, NULL),
-(3, 15580970805782, 33, 1, 0, NULL),
-(4, 15580970805782, 26, 2, 0, NULL),
-(5, 15580970805782, 24, 1, 0, NULL),
-(6, 15580970805782, 33, 1, 0, NULL),
-(7, 15580970805782, 33, 1, 0, NULL),
-(8, 15580970805782, 28, 1, 0, NULL),
 (9, 15580970805782, 24, 3, 0, NULL),
-(10, 15580970805782, 24, 3, 0, NULL),
-(11, 15580970805782, 29, 1, 0, NULL),
+(10, 15580970805782, 24, 3, 3, NULL),
 (12, 15580970805782, 23, 0, 0, NULL),
 (13, 15580970805782, 24, 0, 0, NULL),
 (14, 15580970805782, 26, 0, 0, NULL),
 (15, 15580970805782, 26, 0, 0, NULL),
-(16, 15580970805782, 22, 2, 0, NULL),
-(17, 15580970805782, 31, 4, 0, NULL),
-(18, 15580970805782, 30, 5, 0, NULL),
-(19, 15580970805782, 26, 6, 0, NULL);
+(17, 15580970805782, 31, 3, 1, NULL),
+(20, 15580970805782, 16, 3, 2, NULL),
+(21, 15580970805782, 15, 4, 5, NULL),
+(22, 15580970805782, 16, 4, 4, NULL),
+(23, 15580970805782, 8, 7, 15, NULL),
+(24, 15580970805782, 39, 7, 10, NULL),
+(25, 15580970805782, 40, 7, 9, NULL),
+(26, 15580970805782, 2, 7, 12, NULL),
+(27, 15580970805782, 41, 7, 6, NULL),
+(28, 15580970805782, 41, 7, 13, NULL),
+(29, 15580970805782, 20, 7, 16, NULL),
+(30, 15580970805782, 29, 7, 7, NULL),
+(38, 15580970805782, 19, 7, 8, NULL),
+(48, 15580970805782, 29, 7, 11, NULL),
+(53, 15580970805782, 15, 7, 14, NULL),
+(54, 15580970805782, 33, 15, 17, NULL);
 
 -- --------------------------------------------------------
 
@@ -488,12 +516,10 @@ CREATE TABLE `presentation_folder` (
 --
 
 INSERT INTO `presentation_folder` (`id`, `album_id`, `title`, `parent_folder`, `position`, `note`, `import_id`) VALUES
-(1, 15580970805782, 'Untitled', NULL, 0, NULL, 15569558437702),
-(2, 15580970805782, 'Folder 1', NULL, 0, NULL, 15569558561311),
 (3, 15580970805782, 'Folder 2', NULL, 0, NULL, 15569856288016),
 (4, 15580970805782, 'Folder 3', NULL, 0, NULL, 15569887486894),
-(5, 15580970805782, 'Child folder 1', 2, 0, NULL, 15569889519257),
-(6, 15580970805782, 'Child 2', 2, 0, NULL, 15570012867449);
+(7, 15580970805782, 'Hiu', NULL, 0, NULL, 0),
+(15, 15580970805782, 'Untitled', NULL, 0, NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -593,25 +619,25 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `log`
 --
 ALTER TABLE `log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=284;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=306;
 
 --
 -- AUTO_INCREMENT for table `photos`
 --
 ALTER TABLE `photos`
-  MODIFY `id` bigint(14) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` bigint(14) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `presentation`
 --
 ALTER TABLE `presentation`
-  MODIFY `id` bigint(14) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` bigint(14) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
 
 --
 -- AUTO_INCREMENT for table `presentation_folder`
 --
 ALTER TABLE `presentation_folder`
-  MODIFY `id` bigint(14) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(14) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `users`
