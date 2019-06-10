@@ -1523,7 +1523,7 @@ final class Photo
 
             // Check if other photos are referring to this images
             // If so, only delete the db entry
-            if ($this->exists($photo->checksum, $photo->id) === false) {
+            // if ($this->exists($photo->checksum, $photo->id) === false) {
 
                 // Get retina thumb url
                 $thumbUrl2x = explode(".", $photo->thumbUrl);
@@ -1560,7 +1560,7 @@ final class Photo
                     $error = true;
                 }
 
-            }
+            // }
 
             // Delete db entry (slides that reference to this photo)
             $query = Database::prepare(Database::get(), "DELETE FROM ? WHERE photo_id = '?'", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $photo->id));
