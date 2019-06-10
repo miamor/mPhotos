@@ -17400,6 +17400,7 @@ photo = {
             if (visible.slide()) startSlide = slide.json.id
             else {
                 let firstKey = Object.keys(album.json_slides.content)[0]
+                console.log(firstKey)
 
                 startSlide = album.json_slides.content[firstKey].id
             }

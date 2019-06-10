@@ -75,7 +75,7 @@ final class Albums
 
                 // Execute query
                 // $query = Database::prepare(Database::get(), "SELECT thumbUrl FROM ? WHERE album = '?' AND user_identifier = '?' ORDER BY star DESC, " . substr(Settings::get()['sortingPhotos'], 9) . " LIMIT 3", array(PHOTOS_MANAGER_TABLE_PHOTOS, $album['id'], $_SESSION['identifier']));
-                $query = Database::prepare(Database::get(), "SELECT thumbUrl FROM ? WHERE album = '?' ORDER BY star DESC, " . substr(Settings::get()['sortingPhotos'], 9) . " LIMIT 3", array(PHOTOS_MANAGER_TABLE_PHOTOS, $album['id']));
+                $query = Database::prepare(Database::get(), "SELECT thumbUrl, checksum FROM ? WHERE album = '?' ORDER BY star DESC, " . substr(Settings::get()['sortingPhotos'], 9) . " LIMIT 3", array(PHOTOS_MANAGER_TABLE_PHOTOS, $album['id']));
                 $thumbs = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
 
                 if ($thumbs === false) {
@@ -85,6 +85,21 @@ final class Albums
                 // For each thumb
                 $k = 0;
                 while ($thumb = $thumbs->fetch_object()) {
+                
+                    // get first photo with this checksum
+                    $query = Database::prepare(Database::get(), "SELECT album FROM ? WHERE checksum = '?' ORDER BY id ASC LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $thumb->checksum));
+                    $ref_photo = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+                    if ($ref_photo === false) {
+                        return false;
+                    }
+                    $ref_photo = $ref_photo->fetch_assoc();
+
+                    if ($ref_photo['album'] != 0) {
+                        $PHOTOS_MANAGER_URL_UPLOADS = PHOTOS_MANAGER_URL_UPLOADS . '/' . $ref_photo['album'];
+                        $PHOTOS_MANAGER_URL_UPLOADS_THUMB = $PHOTOS_MANAGER_URL_UPLOADS . '/thumb/';
+                    }
+
+
                     $album['thumbs'][$k] = $PHOTOS_MANAGER_URL_UPLOADS_THUMB . $thumb->thumbUrl;
                     $k++;
                 }
@@ -219,7 +234,7 @@ final class Albums
          * Recent
          */
 
-        $query = Database::prepare(Database::get(), "SELECT thumbUrl, album FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) AND (user_identifier = '?' OR public = 1)ORDER BY position DESC, id DESC", array(PHOTOS_MANAGER_TABLE_PHOTOS, $_SESSION['identifier']));
+        $query = Database::prepare(Database::get(), "SELECT thumbUrl, album, checksum FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) AND (user_identifier = '?' OR public = 1)ORDER BY position DESC, id DESC", array(PHOTOS_MANAGER_TABLE_PHOTOS, $_SESSION['identifier']));
         $recent = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
         $i = 0;
 
@@ -233,9 +248,17 @@ final class Albums
         );
 
         while ($row3 = $recent->fetch_object()) {
+            // get first photo with this checksum
+            $query = Database::prepare(Database::get(), "SELECT album FROM ? WHERE checksum = '?' ORDER BY id ASC LIMIT 1", array(PHOTOS_MANAGER_TABLE_PHOTOS, $row3->checksum));
+            $ref_photo = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+            if ($ref_photo === false) {
+                return false;
+            }
+            $ref_photo = $ref_photo->fetch_assoc();
+
             if ($i < 3) {
-                if ($row3 && $row3->album != 0) {
-                    $PHOTOS_MANAGER_URL_UPLOADS_THUMB = PHOTOS_MANAGER_URL_UPLOADS . '/' . $row3->album . '/thumb/';
+                if ($row3 && $ref_photo->album != 0) {
+                    $PHOTOS_MANAGER_URL_UPLOADS_THUMB = PHOTOS_MANAGER_URL_UPLOADS . '/' . $ref_photo->album . '/thumb/';
                 } else {
                     $PHOTOS_MANAGER_URL_UPLOADS_THUMB = PHOTOS_MANAGER_URL_UPLOADS_THUMB;
                 }
