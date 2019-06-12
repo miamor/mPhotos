@@ -483,11 +483,11 @@ final class Album
                 $slide_id = false;
 
                 if ($folders === false || $folders->num_rows <= 0) {
-                    $slide_id = Slide::add($album_id, $photo['id']);
+                    $slide_id = Slide::add($album_id, $photo['id'], null, $info['note'], $info['position']);
                 } else {
                     $folder = $folders->fetch_assoc();
 
-                    $slide_id = Slide::add($album_id, $photo['id'], $folder['id']);
+                    $slide_id = Slide::add($album_id, $photo['id'], $folder['id'], $info['note'], $info['position']);
                 }
 
                 if ($slide_id === false) {
