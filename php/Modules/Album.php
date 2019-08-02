@@ -926,23 +926,25 @@ final class Album
 
         // real path to folder to zip
         $rootPath = realpath($PHOTOS_MANAGER_UPLOADS);
+        
+        if (is_dir($rootPath)) {
+            // Create recursive directory iterator
+            /** @var SplFileInfo[] $files */
+            $files = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($rootPath),
+                RecursiveIteratorIterator::LEAVES_ONLY
+            );
 
-        // Create recursive directory iterator
-        /** @var SplFileInfo[] $files */
-        $files = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($rootPath),
-            RecursiveIteratorIterator::LEAVES_ONLY
-        );
+            foreach ($files as $name => $file) {
+                // Skip directories (they would be added automatically)
+                if (!$file->isDir()) {
+                    // Get real and relative path for current file
+                    $filePath = $file->getRealPath();
+                    $relativePath = substr($filePath, strlen($rootPath) + 1);
 
-        foreach ($files as $name => $file) {
-            // Skip directories (they would be added automatically)
-            if (!$file->isDir()) {
-                // Get real and relative path for current file
-                $filePath = $file->getRealPath();
-                $relativePath = substr($filePath, strlen($rootPath) + 1);
-
-                // Add current file to archive
-                $zip->addFile($filePath, $relativePath);
+                    // Add current file to archive
+                    $zip->addFile($filePath, $relativePath);
+                }
             }
         }
 
