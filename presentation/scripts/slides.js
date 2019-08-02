@@ -76,13 +76,15 @@ function presentation(slide_data) {
 
     // for (var i = 0; i < slide_data.length; i++) {
     for (var i in slide_data) {
-        var slide = document.createElement('img'),
+        var slide = document.createElement('div'),
             caption = document.createElement('div'),
             slide_title = document.createElement('div')
 
         slide.classList.add('slide')
-        // slide.setAttribute('style', 'background:url(' + slide_data[i].src + ')')
-        slide.setAttribute('src', slide_data[i].src)
+        slide.setAttribute('style', 'background-image:url(' + slide_data[i].src + ');background-repeat:no-repeat')
+        // slide.setAttribute('src', slide_data[i].src)
+        
+        slide.setAttribute('id', i)
         caption.classList.add('caption')
         slide_title.classList.add('caption-heading')
         slide_title.innerHTML = '<h1>' + slide_data[i].title + '</h1>'
@@ -111,9 +113,25 @@ function presentation(slide_data) {
         container.appendChild(caption)
     }
 
-    console.log(currentStage)
     console.log(slides)
+    console.log('currentStage='+currentStage)
+    console.log('currentKey='+currentKey)
+
+        
+    // Get zoom window
+    // console.log(localStorage.getItem('control'))
+    // var control = JSON.parse(localStorage.getItem('control')),
+    //     x = control.x,
+    //     y = control.y,
+    //     img = control.img,
+    //     lens = control.lens,
+    //     cx = slides[currentIndex].offsetWidth / lens.offsetWidth
+    //     cy = slides[currentIndex].offsetHeight / lens.offsetHeight
     
+    // if (control.enabled) {
+    //     slides[currentIndex].style.backgroundSize = (img.width * cx) + "px " + (img.height * cy) + "px"
+    //     slides[currentIndex].style.backgroundPosition = "-" + (x * cx) + "px -" + (y * cy) + "px"
+    // }
 
     var reloadSlides = setInterval(function () {
         setSlide()
@@ -124,7 +142,7 @@ function presentation(slide_data) {
 
     function setSlide() {
         currentStage_new = JSON.parse(localStorage.getItem('currentStage'))
-        console.log(currentStage_new)
+        // console.log(currentStage_new)
         currentIndex_new = parseInt(currentStage_new.index)
         nextIndex_new = currentIndex_new < slide_keys.length - 1 ? currentIndex_new + 1 : 0
         prevIndex_new = currentIndex_new > 0 ? (currentIndex_new - 1) : (slide_keys.length - 1)
@@ -152,6 +170,27 @@ function presentation(slide_data) {
             currentIndex = currentIndex_new
             nextIndex = nextIndex_new
             prevIndex = prevIndex_new
+
+        }
+
+
+
+        // Get zoom window
+        console.log(localStorage.getItem('control'))
+        var control = JSON.parse(localStorage.getItem('control'))
+        if (control.enabled) {
+            var x = control.x,
+                y = control.y,
+                img = control.img,
+                lens = control.lens,
+                cx = slides[currentIndex].offsetWidth / lens.offsetWidth
+                cy = slides[currentIndex].offsetHeight / lens.offsetHeight
+
+            slides[currentIndex].style.backgroundSize = (img.width * cx) + "px " + (img.height * cy) + "px"
+            slides[currentIndex].style.backgroundPosition = "-" + (x * cx) + "px -" + (y * cy) + "px"
+        } else {
+            slides[currentIndex].style.backgroundSize = (slides[currentIndex].offsetWidth) + "px " + (slides[currentIndex].offsetHeight) + "px"
+            slides[currentIndex].style.backgroundPosition = "0px 0px"
         }
     }
 

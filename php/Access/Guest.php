@@ -41,7 +41,8 @@ final class Guest extends Access {
 			case 'Session::logout':   self::logoutAction(); break;
 
 			// $_GET functions
-			case 'Album::getArchive': self::getAlbumArchiveAction(); break;
+			case 'Album::getDownload': self::getAlbumDownloadAction(); break;
+			case 'Album::getExport': self::getAlbumExportAction(); break;
 			case 'Photo::getArchive': self::getPhotoArchiveAction(); break;
 
 		}
@@ -169,7 +170,7 @@ final class Guest extends Access {
 
 	// $_GET functions
 
-	private static function getAlbumArchiveAction() {
+	private static function getAlbumDownloadAction() {
 
 		Validator::required(isset($_GET['albumID'], $_GET['password']), __METHOD__);
 
@@ -178,7 +179,28 @@ final class Guest extends Access {
 		if ($album->getPublic()&&$album->getDownloadable()) {
 
 			// Album Public
-			if ($album->checkPassword($_GET['password'])) $album->getArchive();
+			if ($album->checkPassword($_GET['password'])) $album->getDownload();
+			else                                          Response::warning('Wrong password!');
+
+		} else {
+
+			// Album Private
+			Response::warning('Album private or not downloadable!');
+
+		}
+
+	}
+
+	private static function getAlbumExportAction() {
+
+		Validator::required(isset($_GET['albumID'], $_GET['password']), __METHOD__);
+
+		$album = new Album($_GET['albumID']);
+
+		if ($album->getPublic()&&$album->getDownloadable()) {
+
+			// Album Public
+			if ($album->checkPassword($_GET['password'])) $album->getExport();
 			else                                          Response::warning('Wrong password!');
 
 		} else {

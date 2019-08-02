@@ -742,7 +742,7 @@ final class Album
      * Starts a download of an album.
      * @return resource|boolean Sends a ZIP-file or returns false on failure.
      */
-    public function getArchive()
+    public function getExport()
     {
 
         // Check dependencies
@@ -888,8 +888,30 @@ final class Album
         // Finish zip
         $zip->close();*/
 
-        // zip whole folder
-        // Get real path for our folder
+
+        // Loop throigh slides
+        $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE album_id = '?'", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $this->albumIDs));
+        $slides = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        if ($slides->num_rows > 0) {
+            while ($slide = $slides->fetch_object()) {
+                // save to export data
+                $export_data['slides'][] = json_decode(json_encode($slide), true);
+            }
+        }
+
+
+        // Loop through folders
+        $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE album_id = '?'", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $this->albumIDs));
+        $folders = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        if ($folders->num_rows > 0) {
+            while ($folder = $folders->fetch_object()) {
+                // save to export data
+                $export_data['folders'][] = json_decode(json_encode($folder), true);
+            }
+        }
+
+
+        // Loop through photos
         while ($photo = $photos->fetch_object()) {
             // save to export data
             $export_data['photos'][] = json_decode(json_encode($photo), true);
@@ -901,24 +923,8 @@ final class Album
             }
         }
 
-        $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE album_id = '?'", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, $this->albumIDs));
-        $slides = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
-        if ($slides->num_rows > 0) {
-            while ($slide = $slides->fetch_object()) {
-                // save to export data
-                $export_data['slides'][] = json_decode(json_encode($slide), true);
-            }
-        }
 
-        $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE album_id = '?'", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $this->albumIDs));
-        $folders = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
-        if ($folders->num_rows > 0) {
-            while ($folder = $folders->fetch_object()) {
-                // save to export data
-                $export_data['folders'][] = json_decode(json_encode($folder), true);
-            }
-        }
-
+        // real path to folder to zip
         $rootPath = realpath($PHOTOS_MANAGER_UPLOADS);
 
         // Create recursive directory iterator
@@ -945,6 +951,141 @@ final class Album
         // $export_data_json = 'hiu';
 
         $zip->addFromString('data.json', $export_data_json);
+
+        // Zip archive will be created only after closing object
+        $zip->close();
+
+        // Send zip
+        header("Content-Type: application/zip");
+        header("Content-Disposition: attachment; filename=\"$zipTitle.zip\"");
+        header("Content-Length: " . filesize($filename));
+        readfile($filename);
+
+        // Delete zip
+        unlink($filename);
+
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 1, func_get_args());
+
+        return true;
+
+    }
+
+    public function getDownload()
+    {
+
+        // Check dependencies
+        Validator::required(isset($this->albumIDs), __METHOD__);
+
+        // Call plugins
+        Plugins::get()->activate(__METHOD__, 0, func_get_args());
+
+        // Illicit chars
+        $badChars = array_merge(
+            array_map('chr', range(0, 31)),
+            array("<", ">", ":", '"', "/", "\\", "|", "?", "*")
+        );
+
+        // data to save to export
+        $export_data = array();
+
+        // Photos query
+        switch ($this->albumIDs) {
+            case 's':
+                $photos = Database::prepare(Database::get(), 'SELECT * FROM ? WHERE public = 1', array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $zipTitle = 'Public';
+                break;
+            case 'f':
+                $photos = Database::prepare(Database::get(), 'SELECT * FROM ? WHERE star = 1', array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $zipTitle = 'Starred';
+                break;
+            case 'r':
+                $photos = Database::prepare(Database::get(), 'SELECT * FROM ? WHERE LEFT(id, 10) >= unix_timestamp(DATE_SUB(NOW(), INTERVAL 1 DAY)) GROUP BY checksum', array(PHOTOS_MANAGER_TABLE_PHOTOS));
+                $zipTitle = 'Recent';
+                break;
+            default:
+                $photos = Database::prepare(Database::get(), "SELECT * FROM ? WHERE album = '?'", array(PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs));
+                $zipTitle = 'Unsorted';
+        }
+
+        // Get title from database when album is not a SmartAlbum
+        if ($this->albumIDs != 0 && is_numeric($this->albumIDs)) {
+
+            $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE id = '?' LIMIT 1", array(PHOTOS_MANAGER_TABLE_ALBUMS, $this->albumIDs));
+            $album = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+
+            if ($album === false) {
+                return false;
+            }
+
+            // Get album object
+            $album = $album->fetch_object();
+
+            // Album not found?
+            if ($album === null) {
+                Log::error(Database::get(), __METHOD__, __LINE__, 'Could not find specified album');
+                return false;
+            }
+
+            // save to export data
+            $export_data['album'] = json_decode(json_encode($album), true);
+
+            // Set title
+            $zipTitle = $album->title;
+
+        }
+
+        // Escape title
+        $zipTitle = str_replace($badChars, '', $zipTitle);
+
+        $filename = PHOTOS_MANAGER_DATA . $zipTitle . '.zip';
+
+        // Create zip
+        $zip = new ZipArchive();
+        if ($zip->open($filename, ZIPARCHIVE::CREATE) !== true) {
+            Log::error(Database::get(), __METHOD__, __LINE__, 'Could not create ZipArchive');
+            return false;
+        }
+
+
+
+        // Loop through folders to add in zip
+        $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE album_id = '?' ORDER BY parent_folder ASC", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $this->albumIDs));
+        $folders = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        if ($folders->num_rows > 0) {
+            while ($folder = $folders->fetch_object()) {
+                // create new folder
+                $zip->addEmptyDir($folder->title);
+            }
+        }
+
+
+
+        // Loop through slides to know which slide belongs to which folder
+        $query = Database::prepare(Database::get(), "SELECT slides.*, photos.*, folders.id, folders.title AS folder_title FROM ? slides JOIN ? photos ON slides.album_id = '?' AND slides.photo_id = photos.id JOIN ? folders ON slides.folder_id = folders.id", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs, PHOTOS_MANAGER_TABLE_SLIDES_FOLDER));
+        $slides = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        if ($slides->num_rows > 0) {
+            while ($slide = $slides->fetch_object()) {
+                // find photo url 
+                $PHOTOS_MANAGER_UPLOADS = PHOTOS_MANAGER_UPLOADS;
+                if ($slide->album != 0) {
+                    $PHOTOS_MANAGER_UPLOADS = PHOTOS_MANAGER_UPLOADS . $slide->album . '/big/';
+                }
+                $rootPath = realpath($PHOTOS_MANAGER_UPLOADS);
+
+                $ext = pathinfo($slide->url, PATHINFO_EXTENSION);
+                $photo_name = explode('.'.$ext, $slide->url)[0];
+                // add photo to folder
+                $zip->addFile($rootPath.'/'.$slide->url, $slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.'.$ext);
+
+                // add note file
+                if ($slide->note) {
+                    $zip->addFromString($slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.txt', $slide->note);
+                }
+            }
+        }
+
+
 
         // Zip archive will be created only after closing object
         $zip->close();

@@ -117,7 +117,9 @@ final class Admin extends Access
                 break;
 
             // $_GET functions
-            case 'Album::getArchive':self::getAlbumArchiveAction();
+            case 'Album::getDownload':self::getAlbumDownloadAction();
+                break;
+            case 'Album::getExport':self::getAlbumExportAction();
                 break;
             case 'Photo::getArchive':self::getPhotoArchiveAction();
                 break;
@@ -583,13 +585,23 @@ final class Admin extends Access
 
     // Get functions
 
-    private static function getAlbumArchiveAction()
+    private static function getAlbumDownloadAction()
     {
 
         Validator::required(isset($_GET['albumID']), __METHOD__);
 
         $album = new Album($_GET['albumID']);
-        $album->getArchive();
+        $album->getDownload();
+
+    }
+
+    private static function getAlbumExportAction()
+    {
+
+        Validator::required(isset($_GET['albumID']), __METHOD__);
+
+        $album = new Album($_GET['albumID']);
+        $album->getExport();
 
     }
 

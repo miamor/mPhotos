@@ -1,3 +1,105 @@
+function imageZoom(imgID, resultID, enabled) {
+
+    var img, lens, result, cx, cy
+    img = document.getElementById(imgID)
+    result = document.getElementById(resultID)
+    /* Create lens: */
+    lens = document.getElementById('img-zoom-lens')
+    /* Set background properties for the result DIV */
+    result.style.backgroundImage = "url('" + img.src + "')"
+
+    if (!enabled) {
+        lens.style.visibility = "hidden"
+
+        localStorage.setItem('control', JSON.stringify({enabled: false}))
+        result.style.backgroundSize = "100% 100%"
+        result.style.backgroundPosition = "0px 0px"
+
+    } else {
+        // $('#img-zoom-lens').show()
+        lens.style.visibility = "visible"
+        // lens = document.createElement("DIV");
+        // lens.setAttribute("class", "img-zoom-lens");
+        // /* Insert lens: */
+        // img.parentElement.insertBefore(lens, img);
+        /* Calculate the ratio between result DIV and lens: */
+        cx = result.offsetWidth / lens.offsetWidth
+        cy = result.offsetHeight / lens.offsetHeight
+        /* Set background properties for the result DIV */
+        result.style.backgroundSize = (img.width * cx) + "px " + (img.height * cy) + "px"
+        /* Execute a function when someone moves the cursor over the image, or the lens: */
+        lens.addEventListener("mousemove", moveLens)
+        img.addEventListener("mousemove", moveLens)
+        /* And also for touch screens: */
+        lens.addEventListener("touchmove", moveLens)
+        img.addEventListener("touchmove", moveLens)
+        function moveLens(e) {
+            var pos, x, y
+            /* Prevent any other actions that may occur when moving over the image */
+            e.preventDefault()
+            /* Get the cursor's x and y positions: */
+            pos = getCursorPos(e)
+
+            x = pos.x - (lens.offsetWidth / 2)
+            y = pos.y - (lens.offsetHeight / 2)
+
+            /* Calculate the position of the lens: */
+            lens_x = x - $('#slideview').offset().left + img.offsetLeft
+            lens_y = y + img.offsetTop
+
+            /* Prevent the lens from being positioned outside the image: */
+            if (lens_x > img.width - lens.offsetWidth/2) {
+                lens_x = img.width - lens.offsetWidth - $('#slideview').offset().left + img.offsetLeft
+            }
+            if (lens_x < lens.offsetWidth / 2) {
+                lens_x = 0 - $('#slideview').offset().left + img.offsetLeft
+            }
+            if (lens_y > img.offsetTop + img.height - lens.offsetHeight) {
+                lens_y = img.offsetTop + img.height - lens.offsetHeight
+            }
+            if (lens_y < img.offsetTop + lens.offsetWidth / 2) {
+                lens_y = img.offsetTop
+            }
+
+            /* Save this pos to show on display screen */
+            var controlParams = {
+                x: x,
+                y: y, 
+                lens: {
+                    offsetWidth: lens.offsetWidth,
+                    offsetHeight: lens.offsetHeight
+                },
+                img: {
+                    width: img.width,
+                    height: img.height
+                },
+                enabled: true
+            }
+            // console.log(controlParams)
+            localStorage.setItem('control', JSON.stringify(controlParams))
+
+            /* Set the position of the lens: */
+            lens.style.left = lens_x + "px"
+            lens.style.top = lens_y + "px"
+            /* Display what the lens "sees": */
+            result.style.backgroundPosition = "-" + (x * cx) + "px -" + (y * cy) + "px"
+        }
+        function getCursorPos(e) {
+            var a, x = 0, y = 0
+            e = e || window.event
+            /* Get the x and y positions of the image: */
+            a = img.getBoundingClientRect()
+            /* Calculate the cursor's x and y coordinates, relative to the image: */
+            x = e.pageX - a.left
+            y = e.pageY - a.top
+            /* Consider any page scrolling: */
+            x = x - window.pageXOffset
+            y = y - window.pageYOffset
+            return {x : x, y : y}
+        }
+    }
+} 
+  
 function _taggedTemplateLiteral(t, e) {
     return Object.freeze(Object.defineProperties(t, {
         raw: {
@@ -11199,10 +11301,24 @@ album = {
 
     },
 
-    album.getArchive = function (albumID) {
+    album.getDownload = function (albumID) {
 
         let link = ''
-        let url = `${ api.path }?function=Album::getArchive&albumID=${ albumID }`
+        let url = `${ api.path }?function=Album::getDownload&albumID=${ albumID }`
+
+        if (location.href.indexOf('index.html') > 0) link = location.href.replace(location.hash, '').replace('index.html', url)
+        else link = location.href.replace(location.hash, '') + url
+
+        if (web.publicMode === true) link += `&password=${ encodeURIComponent(password.value) }`
+
+        location.href = link
+
+    },
+
+    album.getExport = function (albumID) {
+
+        let link = ''
+        let url = `${ api.path }?function=Album::getExport&albumID=${ albumID }`
 
         if (location.href.indexOf('index.html') > 0) link = location.href.replace(location.hash, '').replace('index.html', url)
         else link = location.href.replace(location.hash, '') + url
@@ -11711,11 +11827,11 @@ album = {
 
         if (hasMedium === false) {
 
-            html += web.html `<img id='image' class='$${ visibleControls===true ? '' : 'full' }' src='$${ data.url }' draggable='false'>`
+            html += web.html `<img id='image' class='$${ visibleControls===true ? '' : 'full' }' src='$${ data.url }' draggable='false'><div id='zoomed_image' id='img-zoom-result'></div><div id='img-zoom-lens'></div>`
 
         } else {
 
-            html += web.html `<img id='image' class='$${ visibleControls===true ? '' : 'full' }' src='$${ data.url }' srcset='$${ data.medium } 1920w, $${ data.url } $${ data.width }w' draggable='false'>`
+            html += web.html `<img id='image' class='$${ visibleControls===true ? '' : 'full' }' src='$${ data.url }' srcset='$${ data.medium } 1920w, $${ data.url } $${ data.width }w' draggable='false'><div id='zoomed_image' class='img-zoom-result'></div><div id='img-zoom-lens'></div>`
 
         }
 
@@ -11869,6 +11985,22 @@ album = {
         basicContext.show(items, e.originalEvent)
 
         upload.notify()
+
+    },
+
+    contextMenu.archive = function (e) {
+
+        let items = [{
+                title: build.iconic('folder') + 'Download Album',
+                fn: () => album.getDownload(album.getID())
+            },
+            {
+                title: build.iconic('folder') + 'Export Album',
+                fn: () => album.getExport(album.getID())
+            }
+        ]
+
+        basicContext.show(items, e.originalEvent)
 
     },
 
@@ -12460,9 +12592,11 @@ album = {
             if (visible.slide()) slide.delete([slide.getID()])
             else if (visible.photo()) photo.delete([photo.getID()])
         })
-        header.dom('#button_archive').on(eventName, function () {
+        /*header.dom('#button_archive').on(eventName, function () {
             album.getArchive(album.getID())
-        })
+        })*/
+        header.dom('#button_archive').on(eventName, contextMenu.archive)
+
         header.dom('#button_star').on(eventName, function () {
             photo.setStar([photo.getID()])
         })
@@ -13543,6 +13677,18 @@ album = {
         else return false
 
     },
+
+    slide.control = function () {
+        imageZoom("image", "zoomed_image", false)
+
+        $('#image, #img-zoom-lens').mouseover(function () {
+            imageZoom("image", "zoomed_image", true)
+        }).mouseleave(function () {
+            imageZoom("image", "zoomed_image", false)
+            // $('.img-zoom-lens').remove()
+        })
+
+    }
 
     slide.saveStage = function (slideID) {
 
@@ -16998,6 +17144,7 @@ photo = {
             $('#s_note').attr('disabled', true)
             $('#save_note').hide()
 
+            slide.control()
         },
 
         hide: function () {
@@ -17409,6 +17556,8 @@ photo = {
                 startSlide = album.json_slides.content[firstKey].id
             }
 
+            slide.control()
+
             // save state
             slide.saveStage(startSlide)
 
@@ -17605,6 +17754,8 @@ photo = {
             .on('click', '.slide:not(".slide_init")', function () {
                 if (visible.presentation()) {
                     web.goto(album.getID() + '/p/' + $(this).attr('data-id'))
+
+                    slide.control()
 
                     // save state
                     slide.saveStage($(this).attr('data-id'))
