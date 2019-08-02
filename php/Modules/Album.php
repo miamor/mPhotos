@@ -1050,19 +1050,19 @@ final class Album
 
 
         // Loop through folders to add in zip
-        $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE album_id = '?' ORDER BY parent_folder ASC", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $this->albumIDs));
-        $folders = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
-        if ($folders->num_rows > 0) {
-            while ($folder = $folders->fetch_object()) {
-                // create new folder
-                $zip->addEmptyDir($folder->title);
-            }
-        }
+        // $query = Database::prepare(Database::get(), "SELECT * FROM ? WHERE album_id = '?' ORDER BY parent_folder ASC", array(PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, $this->albumIDs));
+        // $folders = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
+        // if ($folders->num_rows > 0) {
+        //     while ($folder = $folders->fetch_object()) {
+        //         // create new folder
+        //         $zip->addEmptyDir($folder->title);
+        //     }
+        // }
 
 
 
         // Loop through slides to know which slide belongs to which folder
-        $query = Database::prepare(Database::get(), "SELECT slides.*, photos.*, folders.id, folders.title AS folder_title FROM ? slides JOIN ? photos ON slides.album_id = '?' AND slides.photo_id = photos.id JOIN ? folders ON slides.folder_id = folders.id", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs, PHOTOS_MANAGER_TABLE_SLIDES_FOLDER));
+        $query = Database::prepare(Database::get(), "SELECT slides.*, photos.*, folders.id, folders.title AS folder_title, parent_folder.title AS parent_folder_title FROM ? slides JOIN ? photos ON slides.album_id = '?' AND slides.photo_id = photos.id JOIN ? folders ON slides.folder_id = folders.id LEFT JOIN ? parent_folder ON parent_folder.id = folders.parent_folder", array(PHOTOS_MANAGER_TABLE_SLIDESHOW, PHOTOS_MANAGER_TABLE_PHOTOS, $this->albumIDs, PHOTOS_MANAGER_TABLE_SLIDES_FOLDER, PHOTOS_MANAGER_TABLE_SLIDES_FOLDER));
         $slides = Database::execute(Database::get(), $query, __METHOD__, __LINE__);
         if ($slides->num_rows > 0) {
             while ($slide = $slides->fetch_object()) {
@@ -1075,13 +1075,25 @@ final class Album
 
                 $ext = pathinfo($slide->url, PATHINFO_EXTENSION);
                 $photo_name = explode('.'.$ext, $slide->url)[0];
-                // add photo to folder
-                $zip->addFile($rootPath.'/'.$slide->url, $slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.'.$ext);
-
-                // add note file
-                if ($slide->note) {
-                    $zip->addFromString($slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.txt', $slide->note);
+                // add photo and note to folder
+                if ($slide->parent_folder_title) {
+                    Response::json($slide->parent_folder_title.'/'.$slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.'.$ext);
+                    // add photo to folder
+                    $zip->addFile($rootPath.'/'.$slide->url, $slide->parent_folder_title.'/'.$slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.'.$ext);
+                    // add note file
+                    if ($slide->note) {
+                        $zip->addFromString($slide->parent_folder_title.'/'.$slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.txt', $slide->note);
+                    }
+                } else {
+                    Response::json($slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.'.$ext);
+                    // add photo to folder
+                    $zip->addFile($rootPath.'/'.$slide->url, $slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.'.$ext);
+                    // add note file
+                    if ($slide->note) {
+                        $zip->addFromString($slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.txt', $slide->note);
+                    }
                 }
+
             }
         }
 
