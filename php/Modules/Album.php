@@ -1077,7 +1077,6 @@ final class Album
                 $photo_name = explode('.'.$ext, $slide->url)[0];
                 // add photo and note to folder
                 if ($slide->parent_folder_title) {
-                    Response::json($slide->parent_folder_title.'/'.$slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.'.$ext);
                     // add photo to folder
                     $zip->addFile($rootPath.'/'.$slide->url, $slide->parent_folder_title.'/'.$slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.'.$ext);
                     // add note file
@@ -1085,7 +1084,6 @@ final class Album
                         $zip->addFromString($slide->parent_folder_title.'/'.$slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.txt', $slide->note);
                     }
                 } else {
-                    Response::json($slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.'.$ext);
                     // add photo to folder
                     $zip->addFile($rootPath.'/'.$slide->url, $slide->folder_title.'/'.$photo_name.'__'.$slide->id.'.'.$ext);
                     // add note file
