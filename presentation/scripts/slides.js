@@ -1,6 +1,5 @@
 function imageZoom(imgID, resultID, enabled) {
-    console.log('imageZoom called')
-    
+
     var img, lens, result, cx, cy
     img = document.getElementById(imgID)
     result = document.getElementById(resultID)
@@ -200,7 +199,7 @@ function presentation(slide_data) {
         leftSlider.appendChild(slide)
         container.appendChild(caption)
 
-        imageZoom(i, 'zoomed_image', true)
+        // imageZoom(i, 'zoomed_image', true)
 
     }
 
