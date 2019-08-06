@@ -6,34 +6,99 @@ function imageZoom(imgID, resultID, enabled) {
     /* Create lens: */
     lens = document.getElementById('img-zoom-lens')
     /* Set background properties for the result DIV */
-    result.style.backgroundImage = "url('" + img.src + "')"
+    if (result) {
+        result.style.backgroundImage = "url('" + img.src + "')"
+
+        ratio = img.width / result.offsetWidth
+        console.log(img.height / ratio)
+        if (img.height / ratio > result.offsetHeight) {
+            console.log('use height ratio')
+            ratio = img.height / result.offsetHeight
+
+            result.offsetWidth = img.width / ratio
+
+            result.style.width = (img.width / ratio)+'px'
+
+        } else {
+            result.offsetHeight = img.height / ratio
+
+            result.style.height = (img.height / ratio)+'px'
+        }
+
+        ratio_lens = img.width / lens.width
+        lens.offsetHeight = img.height / ratio_lens
+        lens.style.height = (img.height / ratio_lens)+'px'
+    }
+
+    if (result && lens) {
+        /* Calculate the ratio between result DIV and lens: */
+        cx = result.offsetWidth / lens.offsetWidth
+        cy = result.offsetHeight / lens.offsetHeight
+        // cy = cx
+
+        if (lens.offsetHeight * cx > result.offsetHeight) {
+            cx = cy
+
+            // lens.offsetWidth = result.offsetWidth / cx
+            // lens.style.width = (result.style.width.split('px')[0] / cy)+'px'
+        } else {
+            cy = cx
+            
+            // lens.style.height = (result.offsetHeight / cy)+'px'
+            // console.log(result)
+        }
+
+        lens.offsetHeight = result.offsetHeight / cy
+        lens.style.height = (result.offsetHeight / cy - 4)+'px'
+
+    }
 
     if (!enabled) {
-        lens.style.visibility = "hidden"
 
-        localStorage.setItem('control', JSON.stringify({enabled: false}))
-        result.style.backgroundSize = "100% 100%"
-        result.style.backgroundPosition = "0px 0px"
+        if (result && lens) {
+            lens.style.visibility = "hidden"
+            result.style.backgroundSize = "100% 100%"
+            result.style.backgroundPosition = "0px 0px"
+        }
+
+        // console.log(img)
+        // console.log(img.width)
+        // console.log(img.height)
+        localStorage.setItem('control', JSON.stringify({
+            img: {
+                width: img.width,
+                height: img.height
+            },
+            enabled: false
+        }))
 
     } else {
-        // $('#img-zoom-lens').show()
         lens.style.visibility = "visible"
+
+        if (result && lens) {
+            /* Set background properties for the result DIV */
+            result.style.backgroundSize = (img.width * cx) + "px " + (img.height * cy) + "px"
+        }
+    }
+    
+    
+    if (result && lens) {
+        // $('#img-zoom-lens').show()
         // lens = document.createElement("DIV");
         // lens.setAttribute("class", "img-zoom-lens");
         // /* Insert lens: */
         // img.parentElement.insertBefore(lens, img);
-        /* Calculate the ratio between result DIV and lens: */
-        cx = result.offsetWidth / lens.offsetWidth
-        cy = result.offsetHeight / lens.offsetHeight
-        /* Set background properties for the result DIV */
-        result.style.backgroundSize = (img.width * cx) + "px " + (img.height * cy) + "px"
+        
         /* Execute a function when someone moves the cursor over the image, or the lens: */
         lens.addEventListener("mousemove", moveLens)
         img.addEventListener("mousemove", moveLens)
         /* And also for touch screens: */
         lens.addEventListener("touchmove", moveLens)
         img.addEventListener("touchmove", moveLens)
+
         function moveLens(e) {
+            lens.style.visibility = "visible"
+
             var pos, x, y
             /* Prevent any other actions that may occur when moving over the image */
             e.preventDefault()
@@ -48,17 +113,21 @@ function imageZoom(imgID, resultID, enabled) {
             lens_y = y + img.offsetTop
 
             /* Prevent the lens from being positioned outside the image: */
-            if (lens_x > img.width - lens.offsetWidth/2) {
+            if (lens_x > img.width - $('#slideview').offset().left + img.offsetLeft - lens.offsetWidth) {
                 lens_x = img.width - lens.offsetWidth - $('#slideview').offset().left + img.offsetLeft
+                x = img.width - lens.offsetWidth
             }
-            if (lens_x < lens.offsetWidth / 2) {
+            if (lens_x < 0 - $('#slideview').offset().left + img.offsetLeft) {
                 lens_x = 0 - $('#slideview').offset().left + img.offsetLeft
+                x = 0
             }
             if (lens_y > img.offsetTop + img.height - lens.offsetHeight) {
                 lens_y = img.offsetTop + img.height - lens.offsetHeight
+                y = img.height - lens.offsetHeight
             }
-            if (lens_y < img.offsetTop + lens.offsetWidth / 2) {
+            if (lens_y < img.offsetTop) {
                 lens_y = img.offsetTop
+                y = 0
             }
 
             /* Save this pos to show on display screen */
@@ -84,6 +153,7 @@ function imageZoom(imgID, resultID, enabled) {
             /* Display what the lens "sees": */
             result.style.backgroundPosition = "-" + (x * cx) + "px -" + (y * cy) + "px"
         }
+
         function getCursorPos(e) {
             var a, x = 0, y = 0
             e = e || window.event
@@ -11827,11 +11897,11 @@ album = {
 
         if (hasMedium === false) {
 
-            html += web.html `<img id='image' class='$${ visibleControls===true ? '' : 'full' }' src='$${ data.url }' draggable='false'><div id='zoomed_image' id='img-zoom-result'></div><div id='img-zoom-lens'></div>`
+            html += web.html `<img id='image' class='$${ visibleControls===true ? '' : 'full' }' src='$${ data.url }' draggable='false'><div id='zoomed_image' style='height:150px' class='img-zoom-result'></div><div id='img-zoom-lens'></div>`
 
         } else {
 
-            html += web.html `<img id='image' class='$${ visibleControls===true ? '' : 'full' }' src='$${ data.url }' srcset='$${ data.medium } 1920w, $${ data.url } $${ data.width }w' draggable='false'><div id='zoomed_image' class='img-zoom-result'></div><div id='img-zoom-lens'></div>`
+            html += web.html `<img id='image' class='$${ visibleControls===true ? '' : 'full' }' src='$${ data.url }' srcset='$${ data.medium } 1920w, $${ data.url } $${ data.width }w' draggable='false'><div id='zoomed_image' style='height:150px' class='img-zoom-result'></div><div id='img-zoom-lens'></div>`
 
         }
 
@@ -13681,7 +13751,8 @@ album = {
     slide.control = function () {
         imageZoom("image", "zoomed_image", false)
 
-        $('#image, #img-zoom-lens').mouseover(function () {
+        $('#image, #img-zoom-lens').hover(function () {
+            console.log('hovering')
             imageZoom("image", "zoomed_image", true)
         }).mouseleave(function () {
             imageZoom("image", "zoomed_image", false)
@@ -13768,6 +13839,11 @@ album = {
 
                     slide.preloadNext(slideID)
 
+                    if (mode === 'presentation') {
+                        console.log('control~')
+                        slide.control()
+                    }
+
                 }, 300)
 
             })
@@ -13776,11 +13852,12 @@ album = {
 
             if (mode === 'presentation') {
                 view.presentation.show()
+                slide.control()
             } else {
                 view.presentation.hide()
                 //slide.preloadNext(slideID)
-
             }
+            
         }
 
     },
@@ -13834,6 +13911,8 @@ album = {
 
             }
 
+            // slide.control()
+
             setTimeout(() => {
                 if (slide.getID() === false) return false
                 if (visible.presentation()) {
@@ -13841,7 +13920,6 @@ album = {
 
                     // save state
                     slide.saveStage(album.json_slides.content['s'+slide.getID()].previousPhoto)
-
                 } else web.goto(album.getID() + '/s/' + album.json_slides.content['s'+slide.getID()].previousPhoto)
             }, delay)
 
@@ -13871,6 +13949,8 @@ album = {
 
             }
 
+            // slide.control()
+
             setTimeout(() => {
                 if (slide.getID() === false) return false
                 if (visible.presentation()) {
@@ -13880,8 +13960,9 @@ album = {
                     // save state
                     console.log(album.json_slides.content['s'+slide.getID()].nextPhoto)
                     slide.saveStage(album.json_slides.content['s'+slide.getID()].nextPhoto)
-
-                } else web.goto(album.getID() + '/s/' + album.json_slides.content['s'+slide.getID()].nextPhoto)
+                } else {                    
+                    web.goto(album.getID() + '/s/' + album.json_slides.content['s'+slide.getID()].nextPhoto)
+                }
             }, delay)
 
         }
@@ -17144,7 +17225,7 @@ photo = {
             $('#s_note').attr('disabled', true)
             $('#save_note').hide()
 
-            slide.control()
+            // slide.control()
         },
 
         hide: function () {
@@ -17541,6 +17622,20 @@ photo = {
         // Header
         header.bind()
 
+
+
+        // Image View
+        web.imageview
+            .on(eventName, '.arrow_wrapper--previous', photo.previous)
+            .on(eventName, '.arrow_wrapper--next', photo.next)
+
+        // Slide View
+        web.slideview
+            .on(eventName, '.arrow_wrapper--previous', slide.previous)
+            .on(eventName, '.arrow_wrapper--next', slide.next)
+
+
+            
         // Left sidebar
         sidebar_slideshow.dom('#button_present').on(eventName, function () {
             localStorage.setItem('albumID', album.getID())
@@ -17572,16 +17667,6 @@ photo = {
         })
 
 
-
-        // Image View
-        web.imageview
-            .on(eventName, '.arrow_wrapper--previous', photo.previous)
-            .on(eventName, '.arrow_wrapper--next', photo.next)
-
-        // Slide View
-        web.slideview
-            .on(eventName, '.arrow_wrapper--previous', slide.previous)
-            .on(eventName, '.arrow_wrapper--next', slide.next)
 
         // Keyboard
         Mousetrap

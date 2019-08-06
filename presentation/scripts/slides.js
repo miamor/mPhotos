@@ -1,3 +1,91 @@
+function imageZoom(imgID, resultID, enabled) {
+    console.log('imageZoom called')
+    
+    var img, lens, result, cx, cy
+    img = document.getElementById(imgID)
+    result = document.getElementById(resultID)
+    /* Create lens: */
+    lens = document.getElementById('img-zoom-lens')
+    /* Set background properties for the result DIV */
+    if (result) {
+        result.style.backgroundImage = "url('" + img.src + "')"
+    }
+
+    if (result && lens && !enabled) {
+        lens.style.visibility = "hidden"
+
+        result.style.backgroundSize = "100% 100%"
+        result.style.backgroundPosition = "0px 0px"
+
+    } else if (result && lens) {
+        // $('#img-zoom-lens').show()
+        lens.style.visibility = "visible"
+        // lens = document.createElement("DIV");
+        // lens.setAttribute("class", "img-zoom-lens");
+        // /* Insert lens: */
+        // img.parentElement.insertBefore(lens, img);
+        /* Calculate the ratio between result DIV and lens: */
+        cx = result.offsetWidth / lens.offsetWidth
+        cy = result.offsetHeight / lens.offsetHeight
+        /* Set background properties for the result DIV */
+        result.style.backgroundSize = (img.width * cx) + "px " + (img.height * cy) + "px"
+        /* Execute a function when someone moves the cursor over the image, or the lens: */
+        lens.addEventListener("mousemove", moveLens)
+        img.addEventListener("mousemove", moveLens)
+        /* And also for touch screens: */
+        lens.addEventListener("touchmove", moveLens)
+        img.addEventListener("touchmove", moveLens)
+        function moveLens(e) {
+            var pos, x, y
+            /* Prevent any other actions that may occur when moving over the image */
+            e.preventDefault()
+            /* Get the cursor's x and y positions: */
+            pos = getCursorPos(e)
+
+            x = pos.x - (lens.offsetWidth / 2)
+            y = pos.y - (lens.offsetHeight / 2)
+
+            /* Calculate the position of the lens: */
+            lens_x = x + img.offsetLeft
+            lens_y = y + img.offsetTop
+
+            /* Prevent the lens from being positioned outside the image: */
+            if (lens_x > img.width - lens.offsetWidth/2) {
+                lens_x = img.width - lens.offsetWidth + img.offsetLeft
+            }
+            if (lens_x < lens.offsetWidth / 2) {
+                lens_x = 0 + img.offsetLeft
+            }
+            if (lens_y > img.offsetTop + img.height - lens.offsetHeight) {
+                lens_y = img.offsetTop + img.height - lens.offsetHeight
+            }
+            if (lens_y < img.offsetTop + lens.offsetWidth / 2) {
+                lens_y = img.offsetTop
+            }
+
+            /* Set the position of the lens: */
+            lens.style.left = lens_x + "px"
+            lens.style.top = lens_y + "px"
+            /* Display what the lens "sees": */
+            result.style.backgroundPosition = "-" + (x * cx) + "px -" + (y * cy) + "px"
+        }
+        function getCursorPos(e) {
+            var a, x = 0, y = 0
+            e = e || window.event
+            /* Get the x and y positions of the image: */
+            a = img.getBoundingClientRect()
+            /* Calculate the cursor's x and y coordinates, relative to the image: */
+            x = e.pageX - a.left
+            y = e.pageY - a.top
+            /* Consider any page scrolling: */
+            x = x - window.pageXOffset
+            y = y - window.pageYOffset
+            return {x : x, y : y}
+        }
+    }
+} 
+
+
 api = {
     path: '../php/index.php',
     onError: null
@@ -111,6 +199,9 @@ function presentation(slide_data) {
         captions.push(caption)
         leftSlider.appendChild(slide)
         container.appendChild(caption)
+
+        imageZoom(i, 'zoomed_image', true)
+
     }
 
     console.log(slides)
@@ -176,22 +267,62 @@ function presentation(slide_data) {
 
 
         // Get zoom window
-        console.log(localStorage.getItem('control'))
-        var control = JSON.parse(localStorage.getItem('control'))
+        var control = JSON.parse(localStorage.getItem('control')),
+            img = control.img,
+            rx = slides[currentIndex].offsetWidth / img.width,
+            ry = slides[currentIndex].offsetHeight / img.height
+
+        if (img.height * rx > slides[currentIndex].offsetHeight) {
+            slide_height = slides[currentIndex].offsetHeight
+            slide_width = img.width * ry
+
+            // slides[currentIndex].offsetWidth = slide_width
+            // slides[currentIndex].style.width = slide_width+'px'
+        } else {
+            slide_height = img.height * rx
+            slide_width = slides[currentIndex].offsetWidth
+
+            // slides[currentIndex].offsetHeight = slide_height
+            // slides[currentIndex].style.height = slide_height+'px'
+        }
+        slides[currentIndex].style.width = (slide_width) + "px"
+        slides[currentIndex].style.height = (slide_height) + "px"
+        // console.log(control)
+
+        var slide_width = slides[currentIndex].offsetWidth
+        var slide_height = slides[currentIndex].offsetHeight
+        // console.log(slide_width+' ~~ '+slide_height)
+
         if (control.enabled) {
             var x = control.x,
                 y = control.y,
-                img = control.img,
-                lens = control.lens,
-                cx = slides[currentIndex].offsetWidth / lens.offsetWidth
-                cy = slides[currentIndex].offsetHeight / lens.offsetHeight
+                lens = control.lens
+            
+            var cx = slide_width / lens.offsetWidth,
+                cy = slide_height / lens.offsetHeight
 
+            if (lens.offsetHeight * cx > slide_height) {
+                cx = cy
+            } else {
+                cy = cx
+            }
+            // console.log(img.width+" * "+cx+" = "+(img.width * cx))
+    
             slides[currentIndex].style.backgroundSize = (img.width * cx) + "px " + (img.height * cy) + "px"
             slides[currentIndex].style.backgroundPosition = "-" + (x * cx) + "px -" + (y * cy) + "px"
+
+            // slides[currentIndex].style.width = ((img.width) * cx) + "px"
         } else {
-            slides[currentIndex].style.backgroundSize = (slides[currentIndex].offsetWidth) + "px " + (slides[currentIndex].offsetHeight) + "px"
+            // slides[currentIndex].style.backgroundSize = (slides[currentIndex].offsetWidth) + "px " + (slides[currentIndex].offsetHeight) + "px"
+            slides[currentIndex].style.backgroundSize = slide_width + "px " + slide_height + "px"
+
             slides[currentIndex].style.backgroundPosition = "0px 0px"
+
+            // slides[currentIndex].style.width = (slide_width) + "px"
         }
+
+        // margin = 
+        // slides[currentIndex].style.margin = "0 "+margin+"px"
     }
 
     var heading = document.querySelector('.caption-heading')

@@ -264,9 +264,9 @@ input{-webkit-user-select:text!important;-moz-user-select:text!important;-ms-use
 .presentation#slideview .button-save_note{display:none!important}
 
 
-#img-zoom-lens{position:absolute;border:1px solid #d4d4d4;width:70px;height:70px;z-index:9999}
+#img-zoom-lens{position:absolute;border:2px solid #b90926;width:90px;*height:70px;z-index:9999}
 /* #zoomed_image{border:1px solid #d4d4d4;width:300px;height:300px;position:fixed;z-index:1000;bottom:0;right:0} */
-#zoomed_image{position:fixed;left:auto;right:1%;width:23%;padding:10px 0!important;height:150px;top:10px;background:transparent;color:#fff;border:0;cursor:default!important}
+#zoomed_image{position:fixed;left:auto;right:1%;width:23%;padding: 0!important;top:10px;background:transparent;color:#fff;border:0;cursor:default!important}
 .presentation#slideview .slide-note{position:fixed;left:auto;right:1%;width:23%;padding:10px 0!important;height:calc(100% - 225px);top:200px;background:transparent;color:#fff;border:0;border-top:1px solid rgba(73,168,168,.98);cursor:default!important}
 
 
